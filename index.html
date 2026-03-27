@@ -1034,7 +1034,7 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 
 <script>
 // ── 데이터 ────────────────────────────────────────────
-const TC = {S:'var(--s)',A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)'};
+const TC = {S:'var(--s)',A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)',E:'var(--c)',F:'#ff9f43'};
 const AGENTS = [
   // ── 총괄 팀장 (S팀) ──────────────────────────────────
   {code:'S-CEO',name:'총괄팀장',role:'👑 AI 에이전트 총괄 팀장 — 4개 사업부 93명 통합 지휘',team:'S',status:'active',kpi:97,last:'항상',next:'매일',log:'4개 사업부 통합 현황 모니터링 + 전략 의사결정 + 사업부 간 시너지 조율 중',
@@ -1413,6 +1413,12 @@ function goSection(id, el) {
   if(id==='cron') renderCronSection();
 }
 
+// ── 유틸리티 ─────────────────────────────────────────────
+function escHtml(str) {
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ── 에이전트 카드 렌더 ────────────────────────────────
 // 팀 컬러
 const TCOLOR = {A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)',F:'#ff9f43'};
@@ -1422,6 +1428,8 @@ function getTeamColor(code) {
   if(code.startsWith('A-')) return 'var(--a)';
   if(code.startsWith('C-')) return 'var(--c)';
   if(code.startsWith('D-')) return 'var(--d)';
+  if(code.startsWith('E') || code.startsWith('C')) return 'var(--c)';
+  if(code.startsWith('F')) return '#ff9f43';
   return TCOLOR[code[0]] || 'var(--muted)';
 }
 
@@ -1501,6 +1509,7 @@ function renderTeamGrid(elId, team) {
 
 // ── 에이전트 탭 전환 ──────────────────────────────────
 function switchAgentTab(tab) {
+  try {
   const tabs = ['order','guide','memory','log','skill'];
   tabs.forEach(t => {
     const panel = document.getElementById('panel-'+t);
@@ -1528,6 +1537,7 @@ function switchAgentTab(tab) {
   } else {
     document.getElementById('send-btn').textContent = '📨 오더 전송';
   }
+  } catch(e) { console.error('switchAgentTab error:', e); }
 }
 
 // ── 상태 영속성 (localStorage + Supabase 클라우드) ───
@@ -2307,9 +2317,10 @@ function deleteAgent() {
 
 // ── 에이전트 모달 ─────────────────────────────────────
 function openAgentModal(code) {
+  try {
   const a = AGENTS.find(x=>x.code===code); if(!a) return;
   currentAgent = a;
-  const teamColor = TC[a.team];
+  const teamColor = TC[a.team] || 'var(--muted)';
   document.getElementById('modal-title').innerHTML = `<span style="color:${teamColor}">${a.code} ${a.name}</span>`;
   document.getElementById('send-btn').style.background = teamColor;
 
@@ -2361,6 +2372,7 @@ function openAgentModal(code) {
   // 항상 오더 탭으로 시작
   switchAgentTab('order');
   document.getElementById('agent-modal').classList.add('open');
+  } catch(e) { console.error('openAgentModal error:', e); }
 }
 
 function openOrderDirect(agentName, msg) {
