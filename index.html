@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🤖 임솔 에이전트 대시보드</title>
 <style>
-:root{--bg:#07071a;--card:#0e0e28;--card2:#13133a;--border:rgba(255,255,255,0.07);--text:#e8e8ff;--muted:rgba(255,255,255,0.38);--a:#3ecf8e;--b:#f0b429;--c:#4d96ff;--d:#a78bfa;--red:#ff6b6b}
+:root{--bg:#07071a;--card:#0e0e28;--card2:#13133a;--border:rgba(255,255,255,0.07);--text:#e8e8ff;--muted:rgba(255,255,255,0.38);--s:#ff6ec7;--a:#3ecf8e;--b:#f0b429;--c:#4d96ff;--d:#a78bfa;--red:#ff6b6b}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;min-height:100vh;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:10px}
@@ -29,6 +29,7 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 .nav-item.active{background:rgba(255,255,255,0.06);color:#fff;border-left-color:#fff}
 .nav-item .nav-icon{font-size:15px;width:20px;text-align:center}
 .nav-item .nav-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.badge-s{background:rgba(255,110,199,.2);color:var(--s)}
 .badge-a{background:rgba(62,207,142,.2);color:var(--a)}
 .badge-b{background:rgba(240,180,41,.2);color:var(--b)}
 .badge-c{background:rgba(77,150,255,.2);color:var(--c)}
@@ -390,9 +391,29 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
         </div>
       </div>
 
+      <!-- 총괄 팀장 -->
+      <div style="background:linear-gradient(135deg,rgba(255,110,199,.1),rgba(167,139,250,.08));border:1px solid rgba(255,110,199,.25);border-radius:16px;padding:20px;margin-bottom:24px;cursor:pointer" onclick="openAgentModal('S-CEO')">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ff6ec7,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👑</div>
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:16px;font-weight:800;color:#ff6ec7">S-CEO 총괄팀장 <span style="font-size:11px;background:rgba(62,207,142,.2);color:var(--a);padding:3px 10px;border-radius:20px;margin-left:8px">🟢 항시 가동</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">4개 사업부 · 93명 에이전트 통합 지휘 | 전략 의사결정 · 사업부 간 시너지 · 긴급 대응</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('order'),50)" style="padding:8px 16px;border-radius:10px;border:none;background:#ff6ec7;color:#000;font-size:12px;font-weight:700;cursor:pointer">📨 오더</button>
+            <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('guide'),50)" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(255,110,199,.4);background:transparent;color:#ff6ec7;font-size:12px;font-weight:700;cursor:pointer">📋 지침</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 빠른 실행 -->
       <div class="section-header"><h2>🚀 빠른 실행</h2></div>
       <div class="quick-grid">
+        <div class="quick-card" style="border-color:rgba(255,110,199,.3);background:rgba(255,110,199,.05)" onclick="openOrderDirect('S-CEO 총괄팀장','👑 4개 사업부 통합 현황 보고 + 이번 주 우선순위 TOP5 결정 + 사업부 간 협업 시너지 포인트 제안해줘.')">
+          <div class="qc-icon">👑</div>
+          <div class="qc-title">총괄 팀장 보고</div>
+          <div class="qc-desc">S-CEO가 4개 사업부 통합 현황 + 우선순위 즉시 보고</div>
+        </div>
         <div class="quick-card" onclick="openOrderDirect('C10 보고왕','📊 지금 바로 전체 현황 보고해줘. 달팽이아지트 펜션 예약 현황, 크몽 판매 현황, 이번 주 주요 이슈 요약해줘.')">
           <div class="qc-icon">📊</div>
           <div class="qc-title">지금 보고 받기</div>
@@ -472,7 +493,8 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
         <h2>🤖 에이전트 팀 <span id="agent-total-badge" style="font-size:13px;font-weight:400;color:var(--a);background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.25);border-radius:8px;padding:3px 10px;margin-left:8px">84명 대기</span></h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="filter-tabs">
-            <div class="filter-tab active" onclick="filterAgents('ALL',this)">전체 (83)</div>
+            <div class="filter-tab active" onclick="filterAgents('ALL',this)">전체 (84)</div>
+            <div class="filter-tab" style="color:var(--s)" onclick="filterAgents('S',this)">👑 총괄 팀장 (1)</div>
             <div class="filter-tab" style="color:var(--a)" onclick="filterAgents('A',this)">🏕️ 달팽이아지트 (22)</div>
             <div class="filter-tab" style="color:var(--b)" onclick="filterAgents('B',this)">🔨 스토리팜 공방 (21)</div>
             <div class="filter-tab" style="color:var(--c)" onclick="filterAgents('C',this)">📢 마케팅 자동화 (15)</div>
@@ -814,8 +836,12 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 
 <script>
 // ── 데이터 ────────────────────────────────────────────
-const TC = {A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)'};
+const TC = {S:'var(--s)',A:'var(--a)',B:'var(--b)',C:'var(--c)',D:'var(--d)'};
 const AGENTS = [
+  // ── 총괄 팀장 (S팀) ──────────────────────────────────
+  {code:'S-CEO',name:'총괄팀장',role:'👑 AI 에이전트 총괄 팀장 — 4개 사업부 93명 통합 지휘',team:'S',status:'active',kpi:97,last:'항상',next:'매일',log:'4개 사업부 통합 현황 모니터링 + 전략 의사결정 + 사업부 간 시너지 조율 중',
+   presets:['전사 현황 종합 보고','사업부별 KPI 점검','이번 주 우선순위 TOP5 결정','사업부 간 협업 이슈 점검','긴급 이슈 대응 지시']},
+
   // ── 달팽이아지트 펜션 (A팀) — 5팀 19명 구조 ──────────
 
   // 1팀: 리서치/영업팀
