@@ -66,6 +66,8 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
   .filter-tabs{flex-wrap:wrap;gap:4px}
   .filter-tab{font-size:11px;padding:5px 10px}
   .section-header{flex-direction:column;align-items:flex-start;gap:10px}
+  [style*="grid-template-columns:repeat(4"]{grid-template-columns:1fr 1fr !important}
+  [style*="grid-template-columns:1fr 1fr;gap:14px"]{grid-template-columns:1fr !important}
 }
 @media(max-width:420px){
   .stats-row{grid-template-columns:1fr}
@@ -296,20 +298,19 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
     <p>임솔 비즈니스 AI 팀</p>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section">Overview</div>
+    <div class="nav-section">COMMAND CENTER</div>
     <div class="nav-item active" onclick="goSection('overview',this)"><span class="nav-icon">📊</span>종합 현황</div>
-    <div class="nav-item" onclick="goSection('agents',this)"><span class="nav-icon">🤖</span>에이전트 팀 <span class="nav-badge badge-a">84</span></div>
+    <div class="nav-item" onclick="goSection('agents',this)"><span class="nav-icon">🤖</span>전체 에이전트 <span class="nav-badge badge-s">97</span></div>
     <div class="nav-item" onclick="goSection('pipeline',this)"><span class="nav-icon">🔗</span>파이프라인</div>
-    <div class="nav-item" onclick="goSection('agency',this)"><span class="nav-icon">🏢</span>사업계획 에이전시 <span class="nav-badge" style="background:rgba(255,159,67,.2);color:#ff9f43">F팀 10</span></div>
-    <div class="nav-section">사업부</div>
-    <div class="nav-item" onclick="goSection('pension',this)"><span class="nav-icon">🏕️</span>달팽이아지트 <span class="nav-badge badge-a" id="cnt-A">A팀 19명</span></div>
-    <div class="nav-item" onclick="goSection('workshop',this)"><span class="nav-icon">🔨</span>스토리팜 공방 <span class="nav-badge badge-b" id="cnt-B">B팀 21명</span></div>
-    <div class="nav-item" onclick="goSection('marketing',this)"><span class="nav-icon">📢</span>마케팅 자동화 <span class="nav-badge badge-c" id="cnt-C">C팀 15명</span></div>
-    <div class="nav-item" onclick="goSection('webdev',this)"><span class="nav-icon">💻</span>웹개발 에이전시 <span class="nav-badge badge-d" id="cnt-D">D팀 15명</span></div>
-    <div class="nav-section">수익</div>
+    <div class="nav-section">사업부 (4개)</div>
+    <div class="nav-item" onclick="goSection('pension',this)"><span class="nav-icon">🏕️</span>달팽이아지트 <span class="nav-badge badge-a" id="cnt-A">20명</span></div>
+    <div class="nav-item" onclick="goSection('workshop',this)"><span class="nav-icon">🔨</span>스토리팜공방 <span class="nav-badge badge-b" id="cnt-B">21명</span></div>
+    <div class="nav-item" onclick="goSection('marketing',this)"><span class="nav-icon">🤖</span>AI자동화 <span class="nav-badge badge-c" id="cnt-C">26명</span></div>
+    <div class="nav-item" onclick="goSection('webdev',this)"><span class="nav-icon">💻</span>웹개발에이전시 <span class="nav-badge badge-d" id="cnt-D">25명</span></div>
+    <div class="nav-item" onclick="goSection('agency',this)"><span class="nav-icon">🏢</span>사업계획 에이전시 <span class="nav-badge" style="background:rgba(255,159,67,.2);color:#ff9f43">F 10</span></div>
+    <div class="nav-section">운영</div>
     <div class="nav-item" onclick="goSection('revenue',this)"><span class="nav-icon">💰</span>수익 트래커</div>
     <div class="nav-item" onclick="goSection('cron',this)"><span class="nav-icon">⏰</span>크론 스케줄</div>
-
   </nav>
   <div class="sidebar-bottom">
     <div style="font-size:12px;margin-bottom:8px;font-weight:700"><span class="online-dot"></span>미라클로 가동 중</div>
@@ -380,7 +381,7 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
         <div class="stat-card blue">
           <div class="stat-label">🤖 에이전트 가동률</div>
           <div class="stat-value">87%</div>
-          <div class="stat-sub">활성 15 / 대기 20 / 휴식 5</div>
+          <div class="stat-sub">총 97명 | S-CEO + 사업부장 4 + 팀원 92</div>
           <div class="stat-bar"><div class="stat-bar-fill" style="width:87%;background:var(--c)"></div></div>
         </div>
         <div class="stat-card purple">
@@ -391,17 +392,128 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
         </div>
       </div>
 
-      <!-- 총괄 팀장 -->
-      <div style="background:linear-gradient(135deg,rgba(255,110,199,.1),rgba(167,139,250,.08));border:1px solid rgba(255,110,199,.25);border-radius:16px;padding:20px;margin-bottom:24px;cursor:pointer" onclick="openAgentModal('S-CEO')">
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ff6ec7,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👑</div>
-          <div style="flex:1;min-width:200px">
-            <div style="font-size:16px;font-weight:800;color:#ff6ec7">S-CEO 총괄팀장 <span style="font-size:11px;background:rgba(62,207,142,.2);color:var(--a);padding:3px 10px;border-radius:20px;margin-left:8px">🟢 항시 가동</span></div>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px">4개 사업부 · 93명 에이전트 통합 지휘 | 전략 의사결정 · 사업부 간 시너지 · 긴급 대응</div>
+      <!-- ═══ 조직 계층도 (S-CEO → 사업부장 → PM → 팀원) ═══ -->
+      <div style="margin-bottom:28px">
+        <div class="section-header"><h2>👑 지휘 체계 (AI 네이티브 조직)</h2></div>
+
+        <!-- S-CEO 총괄팀장 -->
+        <div style="background:linear-gradient(135deg,rgba(255,110,199,.12),rgba(167,139,250,.08));border:1px solid rgba(255,110,199,.3);border-radius:16px;padding:18px 20px;margin-bottom:2px;cursor:pointer;position:relative" onclick="openAgentModal('S-CEO')">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#ff6ec7,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👑</div>
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:15px;font-weight:800;color:#ff6ec7">S-CEO 총괄팀장 <span style="font-size:10px;background:rgba(62,207,142,.2);color:var(--a);padding:2px 8px;border-radius:20px;margin-left:6px">항시 가동</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:3px">4개 사업부 · 97명 에이전트 통합 지휘 | SSOT 관리 · 피드백 루프 · 전략 의사결정</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('order'),50)" style="padding:7px 14px;border-radius:9px;border:none;background:#ff6ec7;color:#000;font-size:11px;font-weight:700;cursor:pointer">📨 오더</button>
+              <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('guide'),50)" style="padding:7px 14px;border-radius:9px;border:1px solid rgba(255,110,199,.4);background:transparent;color:#ff6ec7;font-size:11px;font-weight:700;cursor:pointer">📋 지침</button>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0">
-            <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('order'),50)" style="padding:8px 16px;border-radius:10px;border:none;background:#ff6ec7;color:#000;font-size:12px;font-weight:700;cursor:pointer">📨 오더</button>
-            <button onclick="event.stopPropagation();openAgentModal('S-CEO');setTimeout(()=>switchAgentTab('guide'),50)" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(255,110,199,.4);background:transparent;color:#ff6ec7;font-size:12px;font-weight:700;cursor:pointer">📋 지침</button>
+        </div>
+
+        <!-- 연결선 -->
+        <div style="display:flex;justify-content:center;padding:4px 0">
+          <div style="width:2px;height:20px;background:linear-gradient(180deg,#ff6ec7,rgba(255,255,255,.15))"></div>
+        </div>
+
+        <!-- 사업부장 4명 -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div style="background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.25);border-radius:14px;padding:14px;cursor:pointer;transition:all .2s" onclick="openAgentModal('S-DIR-A')" onmouseover="this.style.background='rgba(62,207,142,.14)'" onmouseout="this.style.background='rgba(62,207,142,.08)'">
+            <div style="font-size:11px;font-weight:800;color:var(--a);margin-bottom:4px">🏕️ 달팽이아지트</div>
+            <div style="font-size:10px;color:var(--muted)">S-DIR-A 사업부장</div>
+            <div style="font-size:10px;color:var(--a);margin-top:6px;font-weight:700">20명 · KPI 92%</div>
+            <div style="margin-top:6px;height:3px;border-radius:2px;background:rgba(255,255,255,.06)"><div style="height:100%;width:92%;border-radius:2px;background:var(--a)"></div></div>
+            <div style="display:flex;gap:4px;margin-top:8px">
+              <button onclick="event.stopPropagation();openAgentModal('S-DIR-A');setTimeout(()=>switchAgentTab('order'),50)" style="flex:1;padding:5px;border-radius:6px;border:none;background:var(--a);color:#000;font-size:9px;font-weight:700;cursor:pointer">오더</button>
+              <button onclick="event.stopPropagation();goSection('pension',document.querySelector('[onclick*=pension]'))" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(62,207,142,.3);background:transparent;color:var(--a);font-size:9px;font-weight:700;cursor:pointer">상세</button>
+            </div>
+          </div>
+          <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:14px;padding:14px;cursor:pointer;transition:all .2s" onclick="openAgentModal('S-DIR-B')" onmouseover="this.style.background='rgba(240,180,41,.14)'" onmouseout="this.style.background='rgba(240,180,41,.08)'">
+            <div style="font-size:11px;font-weight:800;color:var(--b);margin-bottom:4px">🔨 스토리팜공방</div>
+            <div style="font-size:10px;color:var(--muted)">S-DIR-B 사업부장</div>
+            <div style="font-size:10px;color:var(--b);margin-top:6px;font-weight:700">21명 · KPI 88%</div>
+            <div style="margin-top:6px;height:3px;border-radius:2px;background:rgba(255,255,255,.06)"><div style="height:100%;width:88%;border-radius:2px;background:var(--b)"></div></div>
+            <div style="display:flex;gap:4px;margin-top:8px">
+              <button onclick="event.stopPropagation();openAgentModal('S-DIR-B');setTimeout(()=>switchAgentTab('order'),50)" style="flex:1;padding:5px;border-radius:6px;border:none;background:var(--b);color:#000;font-size:9px;font-weight:700;cursor:pointer">오더</button>
+              <button onclick="event.stopPropagation();goSection('workshop',document.querySelector('[onclick*=workshop]'))" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(240,180,41,.3);background:transparent;color:var(--b);font-size:9px;font-weight:700;cursor:pointer">상세</button>
+            </div>
+          </div>
+          <div style="background:rgba(77,150,255,.08);border:1px solid rgba(77,150,255,.25);border-radius:14px;padding:14px;cursor:pointer;transition:all .2s" onclick="openAgentModal('S-DIR-C')" onmouseover="this.style.background='rgba(77,150,255,.14)'" onmouseout="this.style.background='rgba(77,150,255,.08)'">
+            <div style="font-size:11px;font-weight:800;color:var(--c);margin-bottom:4px">🤖 AI자동화</div>
+            <div style="font-size:10px;color:var(--muted)">S-DIR-C 사업부장</div>
+            <div style="font-size:10px;color:var(--c);margin-top:6px;font-weight:700">26명 · KPI 95%</div>
+            <div style="margin-top:6px;height:3px;border-radius:2px;background:rgba(255,255,255,.06)"><div style="height:100%;width:95%;border-radius:2px;background:var(--c)"></div></div>
+            <div style="display:flex;gap:4px;margin-top:8px">
+              <button onclick="event.stopPropagation();openAgentModal('S-DIR-C');setTimeout(()=>switchAgentTab('order'),50)" style="flex:1;padding:5px;border-radius:6px;border:none;background:var(--c);color:#000;font-size:9px;font-weight:700;cursor:pointer">오더</button>
+              <button onclick="event.stopPropagation();goSection('marketing',document.querySelector('[onclick*=marketing]'))" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(77,150,255,.3);background:transparent;color:var(--c);font-size:9px;font-weight:700;cursor:pointer">상세</button>
+            </div>
+          </div>
+          <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);border-radius:14px;padding:14px;cursor:pointer;transition:all .2s" onclick="openAgentModal('S-DIR-D')" onmouseover="this.style.background='rgba(167,139,250,.14)'" onmouseout="this.style.background='rgba(167,139,250,.08)'">
+            <div style="font-size:11px;font-weight:800;color:var(--d);margin-bottom:4px">💻 웹개발에이전시</div>
+            <div style="font-size:10px;color:var(--muted)">S-DIR-D 사업부장</div>
+            <div style="font-size:10px;color:var(--d);margin-top:6px;font-weight:700">25명 · KPI 85%</div>
+            <div style="margin-top:6px;height:3px;border-radius:2px;background:rgba(255,255,255,.06)"><div style="height:100%;width:85%;border-radius:2px;background:var(--d)"></div></div>
+            <div style="display:flex;gap:4px;margin-top:8px">
+              <button onclick="event.stopPropagation();openAgentModal('S-DIR-D');setTimeout(()=>switchAgentTab('order'),50)" style="flex:1;padding:5px;border-radius:6px;border:none;background:var(--d);color:#000;font-size:9px;font-weight:700;cursor:pointer">오더</button>
+              <button onclick="event.stopPropagation();goSection('webdev',document.querySelector('[onclick*=webdev]'))" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(167,139,250,.3);background:transparent;color:var(--d);font-size:9px;font-weight:700;cursor:pointer">상세</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 보고 체계 안내 -->
+        <div style="margin-top:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+          <div style="font-size:11px;color:var(--muted);flex-shrink:0">📡 <b style="color:var(--text)">보고 체인</b></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;flex-wrap:wrap">
+            <span style="color:var(--muted)">팀원</span>
+            <span style="color:rgba(255,255,255,.2)">→</span>
+            <span style="color:var(--muted)">팀 PM</span>
+            <span style="color:rgba(255,255,255,.2)">→</span>
+            <span style="font-weight:700;color:var(--text)">사업부장</span>
+            <span style="color:rgba(255,255,255,.2)">→</span>
+            <span style="font-weight:800;color:#ff6ec7">S-CEO</span>
+            <span style="color:rgba(255,255,255,.2)">→</span>
+            <span style="font-weight:800;color:var(--a)">임솔 (최종 의사결정)</span>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:10px;font-size:10px;flex-shrink:0">
+            <span style="background:rgba(62,207,142,.1);color:var(--a);padding:3px 8px;border-radius:6px">SSOT 원칙</span>
+            <span style="background:rgba(77,150,255,.1);color:var(--c);padding:3px 8px;border-radius:6px">피드백 루프</span>
+            <span style="background:rgba(255,110,199,.1);color:#ff6ec7;padding:3px 8px;border-radius:6px">메모리 관리</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 피드백 루프 & SSOT 현황 ═══ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+        <!-- 피드백 루프 -->
+        <div style="background:rgba(77,150,255,.05);border:1px solid rgba(77,150,255,.2);border-radius:14px;padding:16px">
+          <div style="font-size:13px;font-weight:800;color:var(--c);margin-bottom:12px">🔄 피드백 루프 (자동화)</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(62,207,142,.2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">1</span><span>에이전트 <b>실행</b> → 결과 자동 보고</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(240,180,41,.2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">2</span><span>PM이 <b>리뷰</b> → 품질 검수</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(77,150,255,.2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">3</span><span>사업부장 <b>승인</b> → 전략 조정</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(255,110,199,.2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">4</span><span>S-CEO <b>종합 판단</b> → 우선순위 재배분</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(167,139,250,.2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">5</span><span><b>개선 반영</b> → 재실행 (루프 반복)</span></div>
+          </div>
+        </div>
+        <!-- SSOT 원칙 -->
+        <div style="background:rgba(62,207,142,.05);border:1px solid rgba(62,207,142,.2);border-radius:14px;padding:16px">
+          <div style="font-size:13px;font-weight:800;color:var(--a);margin-bottom:12px">📍 SSOT (Single Source of Truth)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:11px">
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px">
+              <span>에이전트 지침</span><span style="color:var(--a);font-weight:700">대시보드 📋 지침 탭</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px">
+              <span>수익 데이터</span><span style="color:var(--a);font-weight:700">Supabase DB</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px">
+              <span>사업부 문서</span><span style="color:var(--a);font-weight:700">divisions/ MD 파일</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px">
+              <span>참고 자료</span><span style="color:var(--a);font-weight:700">📎 파일 업로드</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px">
+              <span>업무 이력</span><span style="color:var(--a);font-weight:700">오더 결과 아카이브</span>
+            </div>
           </div>
         </div>
       </div>
@@ -490,11 +602,11 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
     <!-- 에이전트 팀 -->
     <div id="section-agents" class="section">
       <div class="section-header">
-        <h2>🤖 에이전트 팀 <span id="agent-total-badge" style="font-size:13px;font-weight:400;color:var(--a);background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.25);border-radius:8px;padding:3px 10px;margin-left:8px">84명 대기</span></h2>
+        <h2>🤖 에이전트 팀 <span id="agent-total-badge" style="font-size:13px;font-weight:400;color:var(--a);background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.25);border-radius:8px;padding:3px 10px;margin-left:8px">97명</span></h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="filter-tabs">
-            <div class="filter-tab active" onclick="filterAgents('ALL',this)">전체 (84)</div>
-            <div class="filter-tab" style="color:var(--s)" onclick="filterAgents('S',this)">👑 총괄 팀장 (1)</div>
+            <div class="filter-tab active" onclick="filterAgents('ALL',this)">전체 (97)</div>
+            <div class="filter-tab" style="color:var(--s)" onclick="filterAgents('S',this)">👑 지휘부 (5)</div>
             <div class="filter-tab" style="color:var(--a)" onclick="filterAgents('A',this)">🏕️ 달팽이아지트 (22)</div>
             <div class="filter-tab" style="color:var(--b)" onclick="filterAgents('B',this)">🔨 스토리팜 공방 (21)</div>
             <div class="filter-tab" style="color:var(--c)" onclick="filterAgents('C',this)">📢 마케팅 자동화 (15)</div>
@@ -842,7 +954,17 @@ const AGENTS = [
   {code:'S-CEO',name:'총괄팀장',role:'👑 AI 에이전트 총괄 팀장 — 4개 사업부 93명 통합 지휘',team:'S',status:'active',kpi:97,last:'항상',next:'매일',log:'4개 사업부 통합 현황 모니터링 + 전략 의사결정 + 사업부 간 시너지 조율 중',
    presets:['전사 현황 종합 보고','사업부별 KPI 점검','이번 주 우선순위 TOP5 결정','사업부 간 협업 이슈 점검','긴급 이슈 대응 지시']},
 
-  // ── 달팽이아지트 펜션 (A팀) — 5팀 19명 구조 ──────────
+  // ── 사업부장 4명 (S팀 — S-CEO 직속) ─────────────────
+  {code:'S-DIR-A',name:'달팽이아지트 사업부장',role:'🏕️ 달팽이아지트 사업부 총괄 — 5팀 20명 지휘',team:'S',status:'active',kpi:92,last:'항상',next:'매일',log:'펜션 사업부 풀퍼널 운영 총괄 + 월 840만 매출 목표 관리 중',
+   presets:['사업부 현황 종합 보고','팀별 KPI 점검','이번 주 운영 이슈','매출 목표 대비 진행률','S-CEO에게 주간 보고']},
+  {code:'S-DIR-B',name:'스토리팜 사업부장',role:'🔨 스토리팜공방 사업부 총괄 — 5팀 21명 지휘',team:'S',status:'active',kpi:88,last:'항상',next:'매일',log:'CNC 공방 사업부 도면→가공→판매 풀퍼널 총괄 + 월 210만 매출 목표 관리 중',
+   presets:['사업부 현황 종합 보고','크몽 판매 현황 점검','생산 파이프라인 점검','스마트스토어 진행률','S-CEO에게 주간 보고']},
+  {code:'S-DIR-C',name:'AI자동화 사업부장',role:'🤖 AI자동화 사업부 총괄 — 5팀 26명 지휘',team:'S',status:'active',kpi:95,last:'항상',next:'매일',log:'전사 마케팅 자동화 + 데이터 분석 + 워크플로우 총괄 + 크론 15개 관리 중',
+   presets:['전사 자동화 현황 보고','크론 가동 상태 점검','채널별 성과 분석 요약','인플루언서 협업 현황','S-CEO에게 주간 보고']},
+  {code:'S-DIR-D',name:'웹개발에이전시 사업부장',role:'💻 웹개발에이전시 사업부 총괄 — 5팀 25명 지휘',team:'S',status:'active',kpi:85,last:'항상',next:'매일',log:'웹개발 수주 + 사업기획 대행 총괄 + 월 480만 매출 목표 관리 중',
+   presets:['사업부 현황 종합 보고','수주 파이프라인 점검','제작 진행 현황','기획대행 프로젝트 현황','S-CEO에게 주간 보고']},
+
+  // ── 달팽이아지트 펜션 (A팀) — 5팀 20명 구조 ──────────
 
   // 1팀: 리서치/영업팀
   {code:'A-RPM',name:'리서치PM',role:'🔬 1팀 리서치/영업 총괄',team:'A',status:'sleep',kpi:90,last:'오늘',next:'매일',log:'펜션 리서치→영업 파이프라인 총괄 관리 중',
