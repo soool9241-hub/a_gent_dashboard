@@ -102,6 +102,27 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
 .orc-summary{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .orc-actions{display:flex;gap:8px}
 .orc-view-btn{flex:1;padding:8px 12px;border-radius:10px;border:1px solid var(--a);background:rgba(62,207,142,.1);color:var(--a);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+
+/* 파일 업로드 영역 */
+.file-upload-zone{border:2px dashed rgba(255,255,255,.12);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-top:8px}
+.file-upload-zone:hover,.file-upload-zone.dragover{border-color:var(--a);background:rgba(62,207,142,.05)}
+.file-upload-zone-text{font-size:12px;color:var(--muted)}
+.file-upload-zone-text span{color:var(--a);font-weight:700;text-decoration:underline}
+.file-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.file-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;transition:all .15s}
+.file-item:hover{background:rgba(255,255,255,.07)}
+.file-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.file-actions{display:flex;gap:4px;flex-shrink:0}
+.file-action-btn{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);font-size:11px;cursor:pointer;transition:all .15s}
+.file-action-btn:hover{background:rgba(255,255,255,.12)}
+.file-action-btn.del{border-color:rgba(255,107,107,.3);color:var(--red)}
+.file-action-btn.del:hover{background:rgba(255,107,107,.15)}
+.file-preview-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.file-preview-box{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:700px;width:92%;max-height:80vh;overflow:auto;padding:20px}
+.file-preview-box pre{font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;color:var(--text)}
 .orc-view-btn:hover{background:rgba(62,207,142,.2)}
 .orc-follow-btn{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .orc-follow-btn:hover{background:rgba(255,255,255,.08);color:var(--text)}
@@ -771,6 +792,14 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
           <div id="preset-edit-list"></div>
           <button onclick="addPreset()" style="width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;margin-top:6px">+ 프리셋 추가</button>
         </div>
+        <div class="modal-section">
+          <label>참고 파일</label>
+          <div class="file-upload-zone" id="file-upload-zone" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" multiple accept=".txt,.md,.pdf,.csv,.json,.html,.js,.py,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx" style="display:none" onchange="handleFileUpload(this.files)">
+            <div class="file-upload-zone-text">📎 <span>파일 선택</span> 또는 드래그 앤 드롭<br><span style="font-size:10px;color:var(--muted)">txt, md, pdf, csv, json, 이미지 등 지원</span></div>
+          </div>
+          <div class="file-list" id="agent-file-list"></div>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -1179,6 +1208,7 @@ function renderTeamGrid(elId, team) {
     const guide = agentGuides[a.code] || '';
     const guidePreview = guide ? guide.split('\n')[0].replace(/📌 역할: /,'') : a.role;
     const hasGuide = !!agentGuides[a.code];
+    const fileCount = (agentFiles[a.code] || []).length;
 
     return `
     <div class="agent-card t-${a.team}" onclick="openAgentModal('${a.code}')" style="--tc:${tc}">
@@ -1210,7 +1240,8 @@ function renderTeamGrid(elId, team) {
       <div class="ac-footer">
         <span>⏰ ${a.last}</span>
         <span style="display:flex;gap:6px;align-items:center">
-          ${hasGuide ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📋 지침 있음</span>` : ''}
+          ${hasGuide ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📋 지침</span>` : ''}
+          ${fileCount > 0 ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📎 ${fileCount}</span>` : ''}
           <span>⏭ ${a.next}</span>
         </span>
       </div>
@@ -1245,6 +1276,7 @@ function switchAgentTab(tab) {
     document.getElementById('guide-text').value = agentGuides[a.code] || a.role + ' 역할을 담당합니다.\n\n최우선 목표: 수익화. 빠른 실행 우선.';
     document.getElementById('send-btn').textContent = '💾 지침 저장';
     renderPresetEditor(a);
+    renderFileList(a.code);
   } else {
     document.getElementById('send-btn').textContent = '📨 오더 전송';
   }
@@ -1257,6 +1289,7 @@ function getStateData() {
   return {
     statuses: statuses,
     guides: agentGuides,
+    files: agentFiles,
     orders: orderResults.filter(function(o){return o.status==='done';}),
     chats: chatHistories
   };
@@ -1265,6 +1298,7 @@ function getStateData() {
 function applyStateData(data) {
   if (data.statuses) AGENTS.forEach(function(a){ if(data.statuses[a.code]) a.status = data.statuses[a.code]; });
   if (data.guides) Object.keys(data.guides).forEach(function(k){ agentGuides[k] = data.guides[k]; });
+  if (data.files) Object.keys(data.files).forEach(function(k){ agentFiles[k] = data.files[k]; });
   if (data.orders) data.orders.forEach(function(ord){ ord.seen = true; if(!orderResults.find(function(x){return x.id===ord.id;})) orderResults.push(ord); });
   if (data.chats) Object.keys(data.chats).forEach(function(k){ if(!chatHistories[k] || chatHistories[k].length === 0) chatHistories[k] = data.chats[k]; });
 }
@@ -1332,6 +1366,128 @@ window.addEventListener('beforeunload', saveState);
 
 // 에이전트 지침 저장소
 const agentGuides = {};
+
+// 에이전트 파일 저장소
+const agentFiles = {};
+
+// 파일 업로드 처리
+function handleFileUpload(files) {
+  const a = currentAgent; if(!a) return;
+  if(!agentFiles[a.code]) agentFiles[a.code] = [];
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    const isImage = file.type.startsWith('image/');
+    reader.onload = function(e) {
+      const fileData = {
+        id: Date.now() + '_' + Math.random().toString(36).substr(2,6),
+        name: file.name,
+        size: file.size,
+        type: file.type || 'unknown',
+        date: new Date().toISOString(),
+        content: isImage ? e.target.result : e.target.result,
+        isImage: isImage
+      };
+      agentFiles[a.code].push(fileData);
+      renderFileList(a.code);
+      saveState();
+      showToast('📎 ' + file.name + ' 업로드 완료');
+    };
+    if(isImage) reader.readAsDataURL(file);
+    else reader.readAsText(file);
+  });
+  document.getElementById('file-input').value = '';
+}
+
+// 파일 리스트 렌더
+function renderFileList(code) {
+  const list = document.getElementById('agent-file-list');
+  const files = agentFiles[code] || [];
+  if(files.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = files.map(f => {
+    const icon = getFileIcon(f.name);
+    const size = formatFileSize(f.size);
+    const date = new Date(f.date).toLocaleDateString('ko-KR');
+    return '<div class="file-item">' +
+      '<div class="file-icon">' + icon + '</div>' +
+      '<div class="file-info"><div class="file-name">' + escHtml(f.name) + '</div><div class="file-meta">' + size + ' · ' + date + '</div></div>' +
+      '<div class="file-actions">' +
+        '<button class="file-action-btn" onclick="previewFile(\'' + f.id + '\',\'' + code + '\')" title="미리보기">👁</button>' +
+        '<button class="file-action-btn" onclick="insertFileToGuide(\'' + f.id + '\',\'' + code + '\')" title="지침에 삽입">📋</button>' +
+        '<button class="file-action-btn del" onclick="deleteFile(\'' + f.id + '\',\'' + code + '\')" title="삭제">✕</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = {txt:'📄',md:'📝',pdf:'📕',csv:'📊',json:'🔧',html:'🌐',js:'⚡',py:'🐍',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',doc:'📘',docx:'📘',xls:'📗',xlsx:'📗'};
+  return icons[ext] || '📄';
+}
+
+function formatFileSize(bytes) {
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// 파일 미리보기
+function previewFile(fileId, code) {
+  const files = agentFiles[code] || [];
+  const f = files.find(x => x.id === fileId);
+  if(!f) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'file-preview-modal';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+  let content;
+  if(f.isImage) {
+    content = '<img src="' + f.content + '" style="max-width:100%;border-radius:8px">';
+  } else {
+    const text = escHtml(f.content || '(내용 없음)');
+    content = '<pre>' + text + '</pre>';
+  }
+  overlay.innerHTML = '<div class="file-preview-box">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:14px;font-weight:700">' + getFileIcon(f.name) + ' ' + escHtml(f.name) + '</div>' +
+      '<button onclick="this.closest(\'.file-preview-modal\').remove()" style="background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:8px;padding:4px 12px;color:var(--text);cursor:pointer;font-size:12px">닫기</button>' +
+    '</div>' + content + '</div>';
+  document.body.appendChild(overlay);
+}
+
+// 파일 내용을 지침에 삽입
+function insertFileToGuide(fileId, code) {
+  const files = agentFiles[code] || [];
+  const f = files.find(x => x.id === fileId);
+  if(!f) return;
+  const textarea = document.getElementById('guide-text');
+  if(f.isImage) {
+    textarea.value += '\n\n[첨부 이미지: ' + f.name + ']';
+  } else {
+    const preview = (f.content || '').substring(0, 2000);
+    textarea.value += '\n\n--- 📎 ' + f.name + ' ---\n' + preview;
+    if((f.content || '').length > 2000) textarea.value += '\n... (이하 생략)';
+  }
+  showToast('📋 ' + f.name + ' 내용 삽입 완료');
+}
+
+// 파일 삭제
+function deleteFile(fileId, code) {
+  if(!agentFiles[code]) return;
+  agentFiles[code] = agentFiles[code].filter(f => f.id !== fileId);
+  renderFileList(code);
+  saveState();
+  showToast('🗑 파일 삭제 완료');
+}
+
+// 드래그 앤 드롭
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const zone = document.getElementById('file-upload-zone');
+    if(!zone) return;
+    zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function(){ zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e){ e.preventDefault(); zone.classList.remove('dragover'); handleFileUpload(e.dataTransfer.files); });
+  }, 500);
+});
 
 function handleAgentAction() {
   const tab = document.getElementById('panel-guide').style.display==='block'?'guide':'order';
