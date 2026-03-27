@@ -2675,6 +2675,7 @@ function refreshModalChat(code) {
 }
 
 // ── 모달 내 오더 큐 (에이전트별) ──────────────────────
+var openInlineResults = {}; // 열린 결과보기 상태 추적
 function renderModalOrderQueue(agentCode) {
   var container = document.getElementById('modal-order-queue');
   if (!container) return;
@@ -2716,8 +2717,9 @@ function renderModalOrderQueue(agentCode) {
         '<div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px">📨 ' + orderSnippet.replace(/</g,'&lt;') + '</div>';
 
       if (isDone) {
-        html += '<button onclick="event.stopPropagation();toggleInlineResult(' + o.id + ')" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--a);background:rgba(62,207,142,.12);color:var(--a);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px">📊 결과보기</button>';
-        html += '<div id="moq-result-' + o.id + '" style="display:none;margin-top:8px;background:rgba(0,0,0,.3);border:1px solid rgba(62,207,142,.15);border-radius:8px;padding:12px">' +
+        var isOpen = !!openInlineResults[o.id];
+        html += '<button onclick="event.stopPropagation();toggleInlineResult(' + o.id + ')" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--a);background:rgba(62,207,142,.12);color:var(--a);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px">' + (isOpen ? '📊 결과 접기' : '📊 결과보기') + '</button>';
+        html += '<div id="moq-result-' + o.id + '" style="display:' + (isOpen ? 'block' : 'none') + ';margin-top:8px;background:rgba(0,0,0,.3);border:1px solid rgba(62,207,142,.15);border-radius:8px;padding:12px">' +
           '<pre style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.7;font-family:inherit;margin:0;max-height:300px;overflow-y:auto">' + (o.result ? o.result.detail.replace(/</g,'&lt;').replace(/>/g,'&gt;') : '') + '</pre>' +
         '</div>';
       } else if (isWorking) {
@@ -2737,9 +2739,11 @@ function toggleInlineResult(orderId) {
   if (el.style.display === 'none') {
     el.style.display = 'block';
     el.previousElementSibling.textContent = '📊 결과 접기';
+    openInlineResults[orderId] = true;
   } else {
     el.style.display = 'none';
     el.previousElementSibling.textContent = '📊 결과보기';
+    delete openInlineResults[orderId];
   }
 }
 
@@ -2765,6 +2769,7 @@ setInterval(function() {
 }, 2000);
 
 // ── 오더 결과 리스트 (메인 대시보드) ──────────────────
+var openDashResults = {}; // 대시보드 결과보기 열림 상태 추적
 function renderOrderResults() {
   var container = document.getElementById('order-results-list');
   var countEl = document.getElementById('order-results-count');
@@ -2807,12 +2812,13 @@ function renderOrderResults() {
 
     if (isDone) {
       var detail = o.result ? o.result.detail.replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+      var dashOpen = !!openDashResults[o.id];
       card += '<div class="orc-summary">' + summaryText + '</div>' +
         '<div class="orc-actions">' +
-          '<button class="orc-view-btn" onclick="event.stopPropagation();toggleDashResult(' + o.id + ')">📊 결과보기</button>' +
+          '<button class="orc-view-btn" onclick="event.stopPropagation();toggleDashResult(' + o.id + ')">' + (dashOpen ? '📊 결과 접기' : '📊 결과보기') + '</button>' +
           '<button class="orc-follow-btn" onclick="openAgentModal(\'' + o.agentCode + '\')">📨 후속오더</button>' +
         '</div>' +
-        '<div id="dash-result-' + o.id + '" style="display:none;margin-top:10px;background:rgba(0,0,0,.3);border:1px solid rgba(62,207,142,.15);border-radius:10px;padding:14px">' +
+        '<div id="dash-result-' + o.id + '" style="display:' + (dashOpen ? 'block' : 'none') + ';margin-top:10px;background:rgba(0,0,0,.3);border:1px solid rgba(62,207,142,.15);border-radius:10px;padding:14px">' +
           '<pre style="font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.8;font-family:inherit;margin:0;max-height:400px;overflow-y:auto">' + detail + '</pre>' +
           '<button onclick="openAgentModal(\'' + o.agentCode + '\')" style="margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid ' + tc + ';background:transparent;color:' + tc + ';font-size:12px;font-weight:700;cursor:pointer">📨 후속 오더 보내기</button>' +
         '</div>';
@@ -2865,9 +2871,11 @@ function toggleDashResult(orderId) {
   if (el.style.display === 'none') {
     el.style.display = 'block';
     if (btn) btn.textContent = '📊 결과 접기';
+    openDashResults[orderId] = true;
   } else {
     el.style.display = 'none';
     if (btn) btn.textContent = '📊 결과보기';
+    delete openDashResults[orderId];
   }
 }
 
