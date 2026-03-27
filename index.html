@@ -891,9 +891,12 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
       <h3 id="modal-title">에이전트</h3>
       <div style="display:flex;align-items:center;gap:8px">
         <!-- 탭 -->
-        <div style="display:flex;gap:4px;background:rgba(0,0,0,.3);border-radius:8px;padding:3px">
-          <button id="tab-order" onclick="switchAgentTab('order')" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;cursor:pointer;font-weight:700;background:rgba(255,255,255,.12);color:#fff">📨 오더</button>
-          <button id="tab-guide" onclick="switchAgentTab('guide')" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;cursor:pointer;font-weight:700;background:transparent;color:rgba(255,255,255,.5)">📋 지침</button>
+        <div style="display:flex;gap:3px;background:rgba(0,0,0,.3);border-radius:8px;padding:3px;flex-wrap:wrap">
+          <button id="tab-order" onclick="switchAgentTab('order')" style="padding:4px 10px;border-radius:6px;border:none;font-size:10px;cursor:pointer;font-weight:700;background:rgba(255,255,255,.12);color:#fff">📨 오더</button>
+          <button id="tab-guide" onclick="switchAgentTab('guide')" style="padding:4px 10px;border-radius:6px;border:none;font-size:10px;cursor:pointer;font-weight:700;background:transparent;color:rgba(255,255,255,.5)">📋 지침</button>
+          <button id="tab-memory" onclick="switchAgentTab('memory')" style="padding:4px 10px;border-radius:6px;border:none;font-size:10px;cursor:pointer;font-weight:700;background:transparent;color:rgba(255,255,255,.5)">🧠 메모리</button>
+          <button id="tab-log" onclick="switchAgentTab('log')" style="padding:4px 10px;border-radius:6px;border:none;font-size:10px;cursor:pointer;font-weight:700;background:transparent;color:rgba(255,255,255,.5)">📓 일지</button>
+          <button id="tab-skill" onclick="switchAgentTab('skill')" style="padding:4px 10px;border-radius:6px;border:none;font-size:10px;cursor:pointer;font-weight:700;background:transparent;color:rgba(255,255,255,.5)">⚡ 스킬</button>
         </div>
         <span class="modal-close" onclick="closeModal()">×</span>
       </div>
@@ -933,6 +936,89 @@ body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','N
             <div class="file-upload-zone-text">📎 <span>파일 선택</span> 또는 드래그 앤 드롭<br><span style="font-size:10px;color:var(--muted)">txt, md, pdf, csv, json, 이미지 등 지원</span></div>
           </div>
           <div class="file-list" id="agent-file-list"></div>
+        </div>
+      </div>
+
+      <!-- 메모리 탭 (4단계 계층) -->
+      <div id="panel-memory" style="display:none">
+        <div class="modal-section">
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="mem-tier-btn active" onclick="switchMemTier('long',this)" style="padding:5px 12px;border-radius:8px;border:1px solid var(--a);background:rgba(62,207,142,.15);color:var(--a);font-size:11px;font-weight:700;cursor:pointer">🏛 장기기억</button>
+            <button class="mem-tier-btn" onclick="switchMemTier('short',this)" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer">📅 단기기억</button>
+            <button class="mem-tier-btn" onclick="switchMemTier('rule',this)" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer">📏 작업규칙</button>
+            <button class="mem-tier-btn" onclick="switchMemTier('tool',this)" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer">🔧 도구규칙</button>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px" id="mem-tier-desc">🏛 핵심 방침 · 역할 정의 · 변하지 않는 원칙 (수동 관리)</div>
+          <textarea id="memory-text" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:12px;resize:vertical;min-height:140px;font-family:inherit;line-height:1.7" placeholder="메모리 내용을 입력하세요..."></textarea>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button onclick="saveMemory()" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--a);color:#000;font-size:12px;font-weight:700;cursor:pointer">💾 메모리 저장</button>
+          </div>
+        </div>
+        <div class="modal-section">
+          <label>🔒 보안 등급</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border)">
+              <input type="radio" name="sec-level" value="internal" checked onchange="saveSecLevel()"> <span style="color:var(--a)">🟢 내부</span> <span style="color:var(--muted);font-size:10px">전체 접근</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border)">
+              <input type="radio" name="sec-level" value="external" onchange="saveSecLevel()"> <span style="color:var(--b)">🟡 외부</span> <span style="color:var(--muted);font-size:10px">제한 접근</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border)">
+              <input type="radio" name="sec-level" value="restricted" onchange="saveSecLevel()"> <span style="color:var(--red)">🔴 민감</span> <span style="color:var(--muted);font-size:10px">최소 접근</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 업무일지 탭 -->
+      <div id="panel-log" style="display:none">
+        <div class="modal-section">
+          <label>📓 업무 일지 (자동 축적)</label>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">오더 실행 결과가 자동으로 일지에 기록됩니다</div>
+          <div id="worklog-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+          <div style="margin-top:10px">
+            <textarea id="manual-log" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:12px;resize:vertical;min-height:60px;font-family:inherit" placeholder="수동 메모 추가..."></textarea>
+            <button onclick="addManualLog()" style="width:100%;padding:8px;border-radius:8px;border:none;background:var(--c);color:#000;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px">📝 메모 추가</button>
+          </div>
+        </div>
+        <div class="modal-section">
+          <label>📡 에이전트 간 통신 로그</label>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">이 에이전트가 다른 에이전트와 주고받은 내역</div>
+          <div id="comm-log-list" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <select id="comm-target" style="flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:11px"></select>
+            <input id="comm-msg" placeholder="메시지 내용..." style="flex:2;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:11px">
+            <button onclick="sendCommLog()" style="padding:8px 14px;border-radius:8px;border:none;background:var(--d);color:#000;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">전송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스킬 라이브러리 탭 -->
+      <div id="panel-skill" style="display:none">
+        <div class="modal-section">
+          <label>⚡ 보유 스킬</label>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">반복 업무를 스킬로 등록하면 원클릭 실행 가능</div>
+          <div id="skill-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="margin-top:10px;border:1px dashed var(--border);border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--text)">+ 새 스킬 등록</div>
+            <input id="skill-name" placeholder="스킬명 (예: 주간 리포트 생성)" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:11px;margin-bottom:6px">
+            <textarea id="skill-prompt" placeholder="실행 프롬프트 (예: 이번 주 판매 현황을 분석해서 주간 리포트를 작성해줘)" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:11px;resize:vertical;min-height:50px;font-family:inherit"></textarea>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <select id="skill-trigger" style="flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:11px">
+                <option value="manual">수동 실행</option>
+                <option value="daily">매일 자동</option>
+                <option value="weekly">매주 자동</option>
+                <option value="event">이벤트 트리거</option>
+              </select>
+              <button onclick="addSkill()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--b);color:#000;font-size:11px;font-weight:700;cursor:pointer">등록</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <label>📘 온보딩 / 인수인계</label>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">이 에이전트의 역할·업무를 신규 에이전트에게 인수인계</div>
+          <button onclick="generateOnboarding()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--d);background:rgba(167,139,250,.1);color:var(--d);font-size:12px;font-weight:700;cursor:pointer">🎓 온보딩 문서 자동 생성</button>
+          <div id="onboarding-result" style="margin-top:8px"></div>
         </div>
       </div>
     </div>
@@ -1388,8 +1474,10 @@ function renderTeamGrid(elId, team) {
       <div class="ac-footer">
         <span>⏰ ${a.last}</span>
         <span style="display:flex;gap:6px;align-items:center">
-          ${hasGuide ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📋 지침</span>` : ''}
-          ${fileCount > 0 ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📎 ${fileCount}</span>` : ''}
+          ${agentSecLevels[a.code]==='external'?'<span style="font-size:9px;background:rgba(240,180,41,.12);padding:2px 6px;border-radius:5px;color:var(--b)">🟡외부</span>':agentSecLevels[a.code]==='restricted'?'<span style="font-size:9px;background:rgba(255,107,107,.12);padding:2px 6px;border-radius:5px;color:var(--red)">🔴민감</span>':''}
+          ${hasGuide ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📋</span>` : ''}
+          ${(agentSkills[a.code]||[]).length > 0 ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">⚡${(agentSkills[a.code]||[]).length}</span>` : ''}
+          ${fileCount > 0 ? `<span style="font-size:9px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;color:${tc}">📎${fileCount}</span>` : ''}
           <span>⏭ ${a.next}</span>
         </span>
       </div>
@@ -1413,18 +1501,30 @@ function renderTeamGrid(elId, team) {
 
 // ── 에이전트 탭 전환 ──────────────────────────────────
 function switchAgentTab(tab) {
-  document.getElementById('panel-order').style.display = tab==='order'?'block':'none';
-  document.getElementById('panel-guide').style.display = tab==='guide'?'block':'none';
-  document.getElementById('tab-order').style.background = tab==='order'?'rgba(255,255,255,.12)':'transparent';
-  document.getElementById('tab-order').style.color = tab==='order'?'#fff':'rgba(255,255,255,.5)';
-  document.getElementById('tab-guide').style.background = tab==='guide'?'rgba(255,255,255,.12)':'transparent';
-  document.getElementById('tab-guide').style.color = tab==='guide'?'#fff':'rgba(255,255,255,.5)';
+  const tabs = ['order','guide','memory','log','skill'];
+  tabs.forEach(t => {
+    const panel = document.getElementById('panel-'+t);
+    const btn = document.getElementById('tab-'+t);
+    if(panel) panel.style.display = t===tab?'block':'none';
+    if(btn) { btn.style.background = t===tab?'rgba(255,255,255,.12)':'transparent'; btn.style.color = t===tab?'#fff':'rgba(255,255,255,.5)'; }
+  });
   const a = currentAgent; if(!a) return;
   if(tab==='guide') {
     document.getElementById('guide-text').value = agentGuides[a.code] || a.role + ' 역할을 담당합니다.\n\n최우선 목표: 수익화. 빠른 실행 우선.';
     document.getElementById('send-btn').textContent = '💾 지침 저장';
     renderPresetEditor(a);
     renderFileList(a.code);
+  } else if(tab==='memory') {
+    document.getElementById('send-btn').textContent = '💾 메모리 저장';
+    loadMemoryTab(a.code);
+  } else if(tab==='log') {
+    document.getElementById('send-btn').textContent = '📓 일지 저장';
+    renderWorklog(a.code);
+    renderCommLog(a.code);
+    loadCommTargets(a.code);
+  } else if(tab==='skill') {
+    document.getElementById('send-btn').textContent = '⚡ 스킬 저장';
+    renderSkillList(a.code);
   } else {
     document.getElementById('send-btn').textContent = '📨 오더 전송';
   }
@@ -1438,6 +1538,11 @@ function getStateData() {
     statuses: statuses,
     guides: agentGuides,
     files: agentFiles,
+    memory: agentMemory,
+    secLevels: agentSecLevels,
+    worklogs: agentWorklogs,
+    commLogs: agentCommLogs,
+    skills: agentSkills,
     orders: orderResults.filter(function(o){return o.status==='done';}),
     chats: chatHistories
   };
@@ -1447,6 +1552,11 @@ function applyStateData(data) {
   if (data.statuses) AGENTS.forEach(function(a){ if(data.statuses[a.code]) a.status = data.statuses[a.code]; });
   if (data.guides) Object.keys(data.guides).forEach(function(k){ agentGuides[k] = data.guides[k]; });
   if (data.files) Object.keys(data.files).forEach(function(k){ agentFiles[k] = data.files[k]; });
+  if (data.memory) Object.keys(data.memory).forEach(function(k){ agentMemory[k] = data.memory[k]; });
+  if (data.secLevels) Object.keys(data.secLevels).forEach(function(k){ agentSecLevels[k] = data.secLevels[k]; });
+  if (data.worklogs) Object.keys(data.worklogs).forEach(function(k){ agentWorklogs[k] = data.worklogs[k]; });
+  if (data.commLogs) Object.keys(data.commLogs).forEach(function(k){ agentCommLogs[k] = data.commLogs[k]; });
+  if (data.skills) Object.keys(data.skills).forEach(function(k){ agentSkills[k] = data.skills[k]; });
   if (data.orders) data.orders.forEach(function(ord){ ord.seen = true; if(!orderResults.find(function(x){return x.id===ord.id;})) orderResults.push(ord); });
   if (data.chats) Object.keys(data.chats).forEach(function(k){ if(!chatHistories[k] || chatHistories[k].length === 0) chatHistories[k] = data.chats[k]; });
 }
@@ -1628,6 +1738,230 @@ if(!agentGuides['S-CEO']) agentGuides['S-CEO'] = `👑 S-CEO 총괄팀장 운영
 // 에이전트 파일 저장소
 const agentFiles = {};
 
+// ── 메모리 4단계 계층 ────────────────────────────────
+const agentMemory = {}; // {code: {long:'', short:'', rule:'', tool:''}}
+let currentMemTier = 'long';
+const memTierDescs = {
+  long: '🏛 핵심 방침 · 역할 정의 · 변하지 않는 원칙 (수동 관리)',
+  short: '📅 일자별 메모 · 오늘의 컨텍스트 · 임시 정보 (크론 자동 축적)',
+  rule: '📏 작업 규칙 · SOP · 반복 업무 절차 · 품질 기준',
+  tool: '🔧 도구 사용법 · API 규칙 · 파라미터 설정 · 연동 정보'
+};
+
+function switchMemTier(tier, btn) {
+  currentMemTier = tier;
+  document.querySelectorAll('.mem-tier-btn').forEach(b => { b.style.background='transparent'; b.style.borderColor='var(--border)'; b.style.color='var(--muted)'; });
+  btn.style.background='rgba(62,207,142,.15)'; btn.style.borderColor='var(--a)'; btn.style.color='var(--a)';
+  document.getElementById('mem-tier-desc').textContent = memTierDescs[tier];
+  const a = currentAgent; if(!a) return;
+  if(!agentMemory[a.code]) agentMemory[a.code] = {long:'',short:'',rule:'',tool:''};
+  document.getElementById('memory-text').value = agentMemory[a.code][tier] || '';
+}
+
+function loadMemoryTab(code) {
+  if(!agentMemory[code]) agentMemory[code] = {long:'',short:'',rule:'',tool:''};
+  currentMemTier = 'long';
+  document.getElementById('memory-text').value = agentMemory[code].long || '';
+  document.getElementById('mem-tier-desc').textContent = memTierDescs.long;
+  // 보안 등급 로드
+  const level = agentSecLevels[code] || 'internal';
+  document.querySelectorAll('input[name="sec-level"]').forEach(r => { r.checked = r.value === level; });
+}
+
+function saveMemory() {
+  const a = currentAgent; if(!a) return;
+  if(!agentMemory[a.code]) agentMemory[a.code] = {long:'',short:'',rule:'',tool:''};
+  agentMemory[a.code][currentMemTier] = document.getElementById('memory-text').value;
+  saveState();
+  showToast('🧠 ' + a.code + ' 메모리(' + currentMemTier + ') 저장 완료');
+}
+
+// ── 보안 등급 ──────────────────────────────────────
+const agentSecLevels = {}; // {code: 'internal'|'external'|'restricted'}
+
+function saveSecLevel() {
+  const a = currentAgent; if(!a) return;
+  const level = document.querySelector('input[name="sec-level"]:checked').value;
+  agentSecLevels[a.code] = level;
+  saveState();
+  showToast('🔒 ' + a.code + ' 보안 등급: ' + level);
+}
+
+// ── 업무일지 (자동 축적) ─────────────────────────────
+const agentWorklogs = {}; // {code: [{date, type, content}]}
+
+function renderWorklog(code) {
+  const list = document.getElementById('worklog-list');
+  const logs = agentWorklogs[code] || [];
+  if(logs.length === 0) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">아직 업무 기록이 없습니다</div>'; return; }
+  list.innerHTML = logs.slice().reverse().slice(0,30).map(l => {
+    const icon = l.type==='order'?'📨':l.type==='result'?'✅':l.type==='comm'?'📡':'📝';
+    const date = new Date(l.date).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:11px;font-weight:700">' + icon + ' ' + (l.type==='order'?'오더 수신':l.type==='result'?'작업 완료':l.type==='comm'?'에이전트 통신':'수동 메모') + '</span>' +
+        '<span style="font-size:10px;color:var(--muted)">' + date + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.7);line-height:1.5;white-space:pre-wrap">' + escHtml(l.content).substring(0,200) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function addManualLog() {
+  const a = currentAgent; if(!a) return;
+  const text = document.getElementById('manual-log').value.trim();
+  if(!text) return;
+  if(!agentWorklogs[a.code]) agentWorklogs[a.code] = [];
+  agentWorklogs[a.code].push({date: new Date().toISOString(), type:'memo', content: text});
+  document.getElementById('manual-log').value = '';
+  renderWorklog(a.code);
+  saveState();
+  showToast('📝 메모 추가 완료');
+}
+
+function autoLogEntry(code, type, content) {
+  if(!agentWorklogs[code]) agentWorklogs[code] = [];
+  agentWorklogs[code].push({date: new Date().toISOString(), type: type, content: content});
+  // 단기 메모리에도 자동 축적
+  if(!agentMemory[code]) agentMemory[code] = {long:'',short:'',rule:'',tool:''};
+  const dateStr = new Date().toLocaleDateString('ko-KR');
+  agentMemory[code].short += '\n[' + dateStr + '] ' + content.substring(0,100);
+  if(agentMemory[code].short.length > 3000) agentMemory[code].short = agentMemory[code].short.substring(agentMemory[code].short.length-2000);
+}
+
+// ── 에이전트 간 통신 로그 ────────────────────────────
+const agentCommLogs = {}; // {code: [{date, from, to, msg}]}
+
+function renderCommLog(code) {
+  const list = document.getElementById('comm-log-list');
+  const logs = agentCommLogs[code] || [];
+  if(logs.length === 0) { list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:11px">통신 기록 없음</div>'; return; }
+  list.innerHTML = logs.slice().reverse().slice(0,20).map(l => {
+    const isFrom = l.from === code;
+    const date = new Date(l.date).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px 10px;border-left:3px solid ' + (isFrom?'var(--c)':'var(--d)') + '">' +
+      '<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">' +
+        '<span style="font-weight:700;color:' + (isFrom?'var(--c)':'var(--d)') + '">' + (isFrom?'→ '+l.to:'← '+l.from) + '</span>' +
+        '<span style="color:var(--muted)">' + date + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.7)">' + escHtml(l.msg) + '</div></div>';
+  }).join('');
+}
+
+function loadCommTargets(code) {
+  const sel = document.getElementById('comm-target');
+  sel.innerHTML = AGENTS.filter(a => a.code !== code).map(a => '<option value="'+a.code+'">'+a.code+' '+a.name+'</option>').join('');
+}
+
+function sendCommLog() {
+  const a = currentAgent; if(!a) return;
+  const target = document.getElementById('comm-target').value;
+  const msg = document.getElementById('comm-msg').value.trim();
+  if(!msg || !target) return;
+  const entry = {date: new Date().toISOString(), from: a.code, to: target, msg: msg};
+  if(!agentCommLogs[a.code]) agentCommLogs[a.code] = [];
+  if(!agentCommLogs[target]) agentCommLogs[target] = [];
+  agentCommLogs[a.code].push(entry);
+  agentCommLogs[target].push(entry);
+  autoLogEntry(a.code, 'comm', '→ ' + target + ': ' + msg);
+  autoLogEntry(target, 'comm', '← ' + a.code + ': ' + msg);
+  document.getElementById('comm-msg').value = '';
+  renderCommLog(a.code);
+  saveState();
+  showToast('📡 ' + a.code + ' → ' + target + ' 통신 전송');
+}
+
+// ── 스킬 라이브러리 ──────────────────────────────────
+const agentSkills = {}; // {code: [{id, name, prompt, trigger, count}]}
+
+function renderSkillList(code) {
+  const list = document.getElementById('skill-list');
+  const skills = agentSkills[code] || [];
+  if(skills.length === 0) { list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:11px">등록된 스킬 없음</div>'; return; }
+  list.innerHTML = skills.map(s => {
+    const triggerLabel = {manual:'수동',daily:'매일',weekly:'매주',event:'이벤트'}[s.trigger]||'수동';
+    return '<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700">⚡ ' + escHtml(s.name) + ' <span style="font-size:9px;background:rgba(240,180,41,.12);color:var(--b);padding:2px 6px;border-radius:4px;margin-left:4px">' + triggerLabel + '</span></div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(s.prompt) + '</div>' +
+        '<div style="font-size:9px;color:var(--muted);margin-top:2px">실행 ' + (s.count||0) + '회</div>' +
+      '</div>' +
+      '<button onclick="runSkill(\'' + s.id + '\',\'' + code + '\')" style="padding:6px 12px;border-radius:7px;border:none;background:var(--a);color:#000;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0">▶ 실행</button>' +
+      '<button onclick="deleteSkill(\'' + s.id + '\',\'' + code + '\')" style="padding:6px 8px;border-radius:7px;border:1px solid rgba(255,107,107,.3);background:transparent;color:var(--red);font-size:10px;cursor:pointer;flex-shrink:0">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function addSkill() {
+  const a = currentAgent; if(!a) return;
+  const name = document.getElementById('skill-name').value.trim();
+  const prompt = document.getElementById('skill-prompt').value.trim();
+  const trigger = document.getElementById('skill-trigger').value;
+  if(!name || !prompt) { showToast('스킬명과 프롬프트를 입력하세요'); return; }
+  if(!agentSkills[a.code]) agentSkills[a.code] = [];
+  agentSkills[a.code].push({id: Date.now()+'_'+Math.random().toString(36).substr(2,4), name, prompt, trigger, count:0});
+  document.getElementById('skill-name').value = '';
+  document.getElementById('skill-prompt').value = '';
+  renderSkillList(a.code);
+  saveState();
+  showToast('⚡ 스킬 "' + name + '" 등록 완료');
+}
+
+function runSkill(skillId, code) {
+  const skills = agentSkills[code] || [];
+  const s = skills.find(x => x.id === skillId);
+  if(!s) return;
+  s.count = (s.count||0) + 1;
+  autoLogEntry(code, 'order', '⚡ 스킬 실행: ' + s.name + '\n' + s.prompt);
+  // 오더 입력창에 프롬프트 삽입
+  document.getElementById('order-text').value = s.prompt;
+  switchAgentTab('order');
+  saveState();
+  showToast('⚡ ' + s.name + ' 실행 → 오더창에 삽입됨');
+}
+
+function deleteSkill(skillId, code) {
+  if(!agentSkills[code]) return;
+  agentSkills[code] = agentSkills[code].filter(s => s.id !== skillId);
+  renderSkillList(code);
+  saveState();
+  showToast('🗑 스킬 삭제 완료');
+}
+
+// ── 온보딩/인수인계 ──────────────────────────────────
+function generateOnboarding() {
+  const a = currentAgent; if(!a) return;
+  const guide = agentGuides[a.code] || a.role;
+  const mem = agentMemory[a.code] || {};
+  const skills = agentSkills[a.code] || [];
+  const logs = (agentWorklogs[a.code] || []).slice(-5);
+  const sec = agentSecLevels[a.code] || 'internal';
+
+  let doc = '🎓 온보딩 문서 — ' + a.code + ' ' + a.name + '\n';
+  doc += '━'.repeat(40) + '\n\n';
+  doc += '📌 역할: ' + a.role + '\n';
+  doc += '🔒 보안등급: ' + sec + '\n';
+  doc += '📊 KPI: ' + a.kpi + '%\n';
+  doc += '⏰ 스케줄: ' + a.next + '\n\n';
+  doc += '━━ 핵심 지침 ━━\n' + (guide || '(없음)') + '\n\n';
+  if(mem.long) doc += '━━ 장기 기억 ━━\n' + mem.long.substring(0,500) + '\n\n';
+  if(mem.rule) doc += '━━ 작업 규칙 ━━\n' + mem.rule.substring(0,500) + '\n\n';
+  if(skills.length > 0) {
+    doc += '━━ 보유 스킬 (' + skills.length + '개) ━━\n';
+    skills.forEach(s => { doc += '• ' + s.name + ' [' + s.trigger + '] — ' + s.prompt.substring(0,80) + '\n'; });
+    doc += '\n';
+  }
+  if(logs.length > 0) {
+    doc += '━━ 최근 활동 ━━\n';
+    logs.forEach(l => { doc += '• [' + new Date(l.date).toLocaleDateString('ko-KR') + '] ' + l.content.substring(0,80) + '\n'; });
+  }
+
+  const result = document.getElementById('onboarding-result');
+  result.innerHTML = '<textarea style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:11px;resize:vertical;min-height:200px;font-family:inherit;line-height:1.6" readonly>' + doc + '</textarea>' +
+    '<button onclick="navigator.clipboard.writeText(this.previousElementSibling.value);showToast(\'📋 클립보드 복사 완료\')" style="width:100%;padding:8px;border-radius:8px;border:none;background:var(--d);color:#000;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px">📋 클립보드에 복사</button>';
+  showToast('🎓 온보딩 문서 생성 완료');
+}
+
 // 파일 업로드 처리
 function handleFileUpload(files) {
   const a = currentAgent; if(!a) return;
@@ -1748,9 +2082,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleAgentAction() {
-  const tab = document.getElementById('panel-guide').style.display==='block'?'guide':'order';
-  if(tab==='guide') saveGuide();
-  else sendOrder();
+  if(document.getElementById('panel-guide').style.display==='block') return saveGuide();
+  if(document.getElementById('panel-memory').style.display==='block') return saveMemory();
+  if(document.getElementById('panel-log').style.display==='block') return addManualLog();
+  if(document.getElementById('panel-skill').style.display==='block') return addSkill();
+  sendOrder();
 }
 
 function saveGuide() {
@@ -1936,6 +2272,8 @@ function sendOrder() {
   };
   orderResults.push(order);
   orderQueue.push(order);
+  // 업무일지 자동 기록
+  autoLogEntry(a.code, 'order', text);
   // 오더 보내면 자동 출근
   var agentObj = AGENTS.find(function(x){return x.code===a.code;});
   if (agentObj && agentObj.status === 'sleep') agentObj.status = 'active';
