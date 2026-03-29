@@ -70,39 +70,39 @@ module.exports = async function handler(req, res) {
   try {
     // 크롤링 키워드 목록
     const keywords = [
-      // A팀 - 달팽이아지트 (펜션/숙박)
-      { keyword: '완주 펜션', unit: 'pension', type: 'pension' },
-      { keyword: '전주 펜션', unit: 'pension', type: 'pension' },
-      { keyword: '전주 글램핑', unit: 'pension', type: 'glamping' },
-      { keyword: '완주 캠핑장', unit: 'pension', type: 'camping' },
-      { keyword: '전주 게스트하우스', unit: 'pension', type: 'guesthouse' },
-      { keyword: '완주 숙박', unit: 'pension', type: 'lodging' },
+      // A팀 - 달팽이아지트 (펜션 숙박 판매 → 단체/기업/여행사가 가망고객)
+      { keyword: '전주 여행사', unit: 'pension', type: 'travel' },
+      { keyword: '전주 기업연수', unit: 'pension', type: 'corporate' },
+      { keyword: '전주 단체숙박', unit: 'pension', type: 'group' },
+      { keyword: '전주 웨딩플래너', unit: 'pension', type: 'wedding' },
+      { keyword: '전주 동호회', unit: 'pension', type: 'club' },
+      { keyword: '완주 워크숍', unit: 'pension', type: 'workshop' },
 
-      // B팀 - 스토리팜 (CNC/공방/제작)
-      { keyword: '전주 인테리어', unit: 'cnc', type: 'interior' },
-      { keyword: '전주 간판', unit: 'cnc', type: 'sign' },
-      { keyword: '전주 공방', unit: 'cnc', type: 'workshop' },
-      { keyword: '전주 목공', unit: 'cnc', type: 'woodwork' },
-      { keyword: '전주 네온사인', unit: 'cnc', type: 'neon' },
-      { keyword: '전주 각인', unit: 'cnc', type: 'engraving' },
+      // B팀 - 스토리팜 (간판/각인/CNC제작 → 새 매장/카페/식당이 가망고객)
+      { keyword: '전주 카페', unit: 'cnc', type: 'cafe' },
+      { keyword: '전주 신규오픈', unit: 'cnc', type: 'newopen' },
+      { keyword: '전주 식당', unit: 'cnc', type: 'restaurant' },
+      { keyword: '전주 네일샵', unit: 'cnc', type: 'nail' },
+      { keyword: '전주 베이커리', unit: 'cnc', type: 'bakery' },
+      { keyword: '전주 소품샵', unit: 'cnc', type: 'shop' },
 
-      // C팀 - AI자동화 (마케팅/자동화 니즈)
+      // C팀 - AI자동화 (마케팅자동화 판매 → SNS/마케팅 고민 소상공인이 가망고객)
+      { keyword: '전주 소상공인', unit: 'automation', type: 'small_biz' },
+      { keyword: '전주 창업', unit: 'automation', type: 'startup' },
       { keyword: '전주 쇼핑몰', unit: 'automation', type: 'shop' },
-      { keyword: '전주 온라인마케팅', unit: 'automation', type: 'marketing' },
-      { keyword: '전주 SNS대행', unit: 'automation', type: 'sns' },
-      { keyword: '전주 블로그대행', unit: 'automation', type: 'blog' },
+      { keyword: '전주 반영구', unit: 'automation', type: 'beauty' },
+      { keyword: '전주 필라테스', unit: 'automation', type: 'pilates' },
+      { keyword: '전주 네일아트', unit: 'automation', type: 'nail' },
 
-      // D팀 - 웹개발 (홈페이지 필요 업종)
-      { keyword: '전주 카페', unit: 'webdev', type: 'cafe' },
-      { keyword: '전주 음식점', unit: 'webdev', type: 'restaurant' },
+      // D팀 - 웹개발 (홈페이지 제작 → 홈페이지 없는 업체가 가망고객)
       { keyword: '전주 미용실', unit: 'webdev', type: 'beauty' },
       { keyword: '전주 학원', unit: 'webdev', type: 'academy' },
       { keyword: '전주 병원', unit: 'webdev', type: 'hospital' },
       { keyword: '전주 치과', unit: 'webdev', type: 'dental' },
       { keyword: '전주 헬스장', unit: 'webdev', type: 'gym' },
       { keyword: '전주 부동산', unit: 'webdev', type: 'realestate' },
-      { keyword: '전주 꽃집', unit: 'webdev', type: 'flower' },
       { keyword: '전주 세무사', unit: 'webdev', type: 'tax' },
+      { keyword: '전주 법무사', unit: 'webdev', type: 'legal' },
     ];
 
     // 매 실행마다 6~7개 키워드 로테이션 (사업부 골고루)
@@ -129,9 +129,14 @@ module.exports = async function handler(req, res) {
           website_status: hasWeb ? 'exists' : 'none',
           business_unit: kw.unit,
           source: 'naver_map',
-          need: hasWeb ? '리뉴얼 검토 대상' : '홈페이지 없음 - 제작 필요',
-          score: hasWeb ? 5 : 20,
-          customer_type: 'b2c',
+          need: kw.unit === 'pension' ? '단체숙박/워크숍 유치 대상'
+              : kw.unit === 'cnc' ? '간판/인테리어소품 제작 제안 대상'
+              : kw.unit === 'automation' ? (hasWeb ? 'SNS/마케팅 자동화 제안' : 'SNS+홈페이지 패키지 제안')
+              : (hasWeb ? '홈페이지 리뉴얼 검토' : '홈페이지 없음 - 제작 필요'),
+          score: kw.unit === 'pension' ? 15
+              : kw.unit === 'cnc' ? 15
+              : hasWeb ? 5 : 20,
+          customer_type: kw.unit === 'pension' ? 'b2b' : 'b2c',
           assigned_to: kw.unit === 'webdev' ? 'D-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : kw.unit === 'automation' ? 'C-LEAD' : 'B-LEAD'
         };
 
