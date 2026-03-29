@@ -186,7 +186,7 @@ module.exports = async function handler(req, res) {
         const result = await saveLead(lead);
         totalCollected++;
         if (Array.isArray(result) && result.length > 0) totalNew++;
-        if (!hasWeb) noWebsite++;
+        if (hasNoSite || isSNS || isBlog) noWebsite++;
       }
 
       results.push({ keyword: kw.keyword, unit: kw.unit, items: items.length });
