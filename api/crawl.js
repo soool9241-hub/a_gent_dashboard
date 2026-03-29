@@ -147,6 +147,11 @@ module.exports = async function handler(req, res) {
     let totalCollected = 0;
     let totalNew = 0;
     let noWebsite = 0;
+    let hasPhone = 0;
+    let hotLeads = 0;
+    let topBlog = { name: '', count: 0 };
+    let snsOnly = 0;
+    const hotList = [];
     const results = [];
 
     for (const kw of batch) {
@@ -238,6 +243,13 @@ module.exports = async function handler(req, res) {
         totalCollected++;
         if (Array.isArray(result) && result.length > 0) totalNew++;
         if (hasNoSite || isSNS || isBlog) noWebsite++;
+        if (phone) hasPhone++;
+        if (isSNS) snsOnly++;
+        if (score >= 30) {
+          hotLeads++;
+          hotList.push({ name: name, score: score, blog: blogCount, site: siteStatus, phone: phone || '없음' });
+        }
+        if (blogCount > topBlog.count) topBlog = { name: name, count: blogCount };
       }
 
       results.push({ keyword: kw.keyword, unit: kw.unit, items: items.length });
@@ -254,15 +266,55 @@ module.exports = async function handler(req, res) {
       status: 'completed'
     });
 
-    // 텔레그램 알림 (수집 결과가 있을 때만)
+    // DB 전체 현황 조회
+    const allLeads = await httpReq(SB_URL + '/rest/v1/leads?select=name,score,website_status,headcount,phone&order=score.desc', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }
+    });
+    const allArr = Array.isArray(allLeads) ? allLeads : [];
+    const totalDB = allArr.length;
+    const totalNoSite = allArr.filter(l => l.website_status === 'none' || l.website_status === 'sns_only' || l.website_status === 'blog_only').length;
+    const totalHot = allArr.filter(l => l.score >= 30).length;
+    const totalPhone = allArr.filter(l => l.phone).length;
+
+    // 홈페이지 없는 곳 중 블로그리뷰 많은 순 TOP5
+    const noSiteLeads = allArr
+      .filter(l => l.website_status === 'none' || l.website_status === 'sns_only' || l.website_status === 'blog_only')
+      .map(l => {
+        const m = (l.headcount || '').match(/(\d+)/);
+        return { name: l.name, blog: m ? parseInt(m[1]) : 0, phone: l.phone, score: l.score };
+      })
+      .sort((a, b) => b.blog - a.blog)
+      .slice(0, 5);
+
+    // 텔레그램 리포트
     if (totalCollected > 0) {
-      const msg = '📡 *크롤링 완료*\n\n'
-        + results.map(r => '🔍 ' + r.keyword + ': ' + r.items + '건').join('\n')
-        + '\n\n📦 수집: ' + totalCollected + '건\n🆕 신규: ' + totalNew + '건\n🌐 홈페이지 없음: ' + noWebsite + '건';
+      let msg = '📡 *2시간 크롤링 리포트*\n';
+      msg += new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + '\n\n';
+
+      // 1. 전체 지표
+      msg += '📊 *전체 현황*\n';
+      msg += '총 누적: *' + totalDB + '건*\n';
+      msg += '이번 수집: ' + totalCollected + '건 (신규 ' + totalNew + '건)\n';
+      msg += '전화번호 확보: ' + totalPhone + '건 (' + Math.round(totalPhone/totalDB*100) + '%)\n\n';
+
+      // 2. 홈페이지 없는 곳 지표
+      msg += '🔥 *홈페이지 없는 곳 (영업대상)*\n';
+      msg += '총: *' + totalNoSite + '건* (' + Math.round(totalNoSite/totalDB*100) + '%)\n';
+      msg += 'Hot 리드(30점↑): *' + totalHot + '건*\n\n';
+
+      // 3. 블로그리뷰 많은 순 TOP5
+      if (noSiteLeads.length > 0) {
+        msg += '⭐ *사이트없는데 인기있는 TOP5*\n';
+        noSiteLeads.forEach((l, i) => {
+          msg += (i+1) + '. *' + l.name + '*\n';
+          msg += '   블로그 ' + l.blog + '건 | ' + l.score + '점 | 📞' + (l.phone || '없음') + '\n';
+        });
+      }
+
       await sendTelegram(msg);
     }
 
-    return res.json({ success: true, collected: totalCollected, new: totalNew, noWebsite, results });
+    return res.json({ success: true, collected: totalCollected, new: totalNew, noWebsite, hotLeads, totalDB, results });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
