@@ -31,6 +31,13 @@ async function searchNaver(keyword) {
   return data.items || [];
 }
 
+async function searchBlogCount(name) {
+  if (!NAVER_ID || !NAVER_SECRET || !name) return 0;
+  const url = 'https://openapi.naver.com/v1/search/blog.json?query=' + encodeURIComponent(name) + '&display=1';
+  const data = await httpReq(url, { headers: { 'X-Naver-Client-Id': NAVER_ID, 'X-Naver-Client-Secret': NAVER_SECRET } });
+  return data.total || 0;
+}
+
 async function saveLead(lead) {
   return httpReq(SB_URL + '/rest/v1/leads', {
     method: 'POST',
@@ -186,6 +193,13 @@ module.exports = async function handler(req, res) {
           score = 5; need = '🔄 [2순위] 기존 사이트 보유 — 리뉴얼 검토'; priority = '2순위';
         }
 
+        // 블로그 리뷰 수 조회
+        const blogCount = await searchBlogCount(name);
+        // 블로그 리뷰 많으면 스코어 보너스 (인기 업체 = 투자 여력)
+        if (blogCount >= 100) score += 15;
+        else if (blogCount >= 30) score += 10;
+        else if (blogCount >= 10) score += 5;
+
         const lead = {
           name: name,
           company: name,
@@ -199,12 +213,14 @@ module.exports = async function handler(req, res) {
           score: score,
           customer_type: 'b2b',
           assigned_to: 'D-LEAD',
+          headcount: blogCount > 0 ? '블로그리뷰 ' + blogCount + '건' : null,
           interest: [kw.type],
-          tags: [category, kw.type, priority, siteStatus, kw.zone + '권역'].filter(Boolean),
+          tags: [category, kw.type, priority, siteStatus, kw.zone + '권역', blogCount >= 30 ? '인기업체' : ''].filter(Boolean),
           notes: [
             '🏷️ 우선순위: ' + priority + ' | ' + kw.zone + '권역',
             '📌 업종: ' + (category || kw.type),
             '📞 전화: ' + (phone || '미등록'),
+            '📝 블로그 리뷰: ' + blogCount + '건' + (blogCount >= 30 ? ' ⭐인기!' : ''),
             '🌐 관리채널: ' + (link || '없음') + ' (' + siteStatus + ')',
             desc ? '📝 설명: ' + desc.replace(/<[^>]*>/g, '') : '',
             '📍 지번: ' + (item.address || '-'),
