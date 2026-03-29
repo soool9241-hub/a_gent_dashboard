@@ -4,6 +4,7 @@ const SB_URL = (process.env.SUPABASE_URL || 'https://pcgzuvnvcxoobkcluksz.supaba
 const SB_KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
 const TG_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 const TG_CHAT = (process.env.TELEGRAM_CHAT_ID || '').trim();
+const CLAUDE_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
 
 function httpReq(url, options, body) {
   return new Promise((resolve, reject) => {
@@ -184,7 +185,46 @@ async function handleCommand(chatId, text) {
     );
   }
 
-  // 기본 응답
+  // Claude AI 대화 (명령어가 아닌 일반 메시지)
+  if (CLAUDE_KEY) {
+    try {
+      // 가망고객 현황 컨텍스트 가져오기
+      const leads = await sbFetch('leads?select=business_unit,stage,score,source&order=created_at.desc');
+      const arr = Array.isArray(leads) ? leads : [];
+      const hot = arr.filter(l => l.score >= 50).length;
+      const warm = arr.filter(l => l.score >= 20 && l.score < 50).length;
+
+      const systemPrompt = '너는 "S-CEO 비서봇"이야. 가망고객 수집 시스템을 운영하는 AI 비서야.\n'
+        + '현재 DB 현황: 총 ' + arr.length + '명 (Hot: ' + hot + ', Warm: ' + warm + ', Cold: ' + (arr.length - hot - warm) + ')\n'
+        + '사업부: A-달팽이아지트(펜션), B-스토리팜(CNC공방), C-AI자동화, D-웹개발\n'
+        + '한국어로 간결하고 실용적으로 답변해. 이모지 적절히 사용.\n'
+        + '가망고객, 마케팅, 영업, 사업 관련 질문에 특히 전문적으로 답변해.\n'
+        + '명령어 안내가 필요하면: /현황, /hot, /오늘, /csv, /수집, /도움';
+
+      const claudeResp = await httpReq('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_KEY,
+          'anthropic-version': '2023-06-01'
+        }
+      }, JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cmd }]
+      }));
+
+      if (claudeResp.content && claudeResp.content[0]) {
+        const reply = claudeResp.content[0].text;
+        return sendTG(chatId, reply);
+      }
+    } catch(e) {
+      console.error('Claude API error:', e);
+    }
+  }
+
+  // Claude 키 없을 때 기본 응답
   return sendTG(chatId,
     '안녕하세요! 가망고객 수집봇입니다 🤖\n/도움 을 입력하면 명령어를 확인할 수 있습니다.'
   );
