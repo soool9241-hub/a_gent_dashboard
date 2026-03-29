@@ -3116,7 +3116,65 @@ async function processQueue() {
     var startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
     chatHistories[order.agentCode].push({role:'agent',text:'⏳ 오더 접수! Claude AI가 작업 중...',time:startStr});
 
-    // Claude API 호출 (순차 — 하나씩)
+    // S-HUNT: 실제 가망고객 API 연동
+    if (order.agentCode === 'S-HUNT') {
+      try {
+        var huntText = order.orderText;
+        var huntResult = '';
+        // 수집 실행
+        if (huntText.includes('수집') || huntText.includes('크롤링') || huntText.includes('실행')) {
+          chatHistories[order.agentCode].push({role:'agent',text:'🔄 크롤링 실행 중... 잠시 기다려주세요.',time:startStr});
+          updateOpenModal(order.agentCode);
+          var crawlResp = await fetch('/api/crawl');
+          var crawlData = await crawlResp.json();
+          huntResult = '📡 크롤링 완료!\n\n📦 수집: ' + crawlData.collected + '건\n🆕 신규: ' + (crawlData.new||0) + '건\n🌐 사이트없음: ' + (crawlData.noWebsite||0) + '건\n📊 DB 총: ' + (crawlData.totalDB||'?') + '건';
+        }
+        // CSV 다운로드
+        else if (huntText.includes('CSV') || huntText.includes('csv') || huntText.includes('다운') || huntText.includes('엑셀')) {
+          window.open('/api/leads?action=csv', '_blank');
+          huntResult = '📋 CSV 다운로드를 시작했습니다!\n새 탭에서 파일이 다운로드됩니다.';
+        }
+        // 현황 보고
+        else if (huntText.includes('현황') || huntText.includes('보고') || huntText.includes('상태')) {
+          var sumResp = await fetch('/api/leads?action=summary');
+          var sumData = await sumResp.json();
+          huntResult = '📊 가망고객 수집 현황\n\n총 누적: ' + sumData.total + '건\n🔥 Hot(50점↑): ' + sumData.hot + '건\n\n사업부별:\n';
+          var uNames = {pension:'🏡A-펜션',cnc:'🔧B-CNC',automation:'🤖C-자동화',webdev:'💻D-웹개발'};
+          Object.keys(sumData.byUnit||{}).forEach(function(u){ huntResult += (uNames[u]||u) + ': ' + sumData.byUnit[u] + '건\n'; });
+        }
+        // TOP10 / 핫리드
+        else if (huntText.includes('TOP') || huntText.includes('top') || huntText.includes('핫') || huntText.includes('hot') || huntText.includes('홈페이지 없')) {
+          var hotResp = await fetch('/api/leads?action=hot');
+          var hotData = await hotResp.json();
+          huntResult = '🔥 핫 리드 TOP ' + hotData.length + '\n\n';
+          hotData.slice(0,10).forEach(function(l,i){ huntResult += (i+1) + '. ' + (l.name||l.company||'?') + ' (' + l.score + '점)\n   📞 ' + (l.phone||'없음') + ' | ' + (l.need||'') + '\n\n'; });
+        }
+        // 오늘 수집
+        else if (huntText.includes('오늘') || huntText.includes('신규')) {
+          var todayResp = await fetch('/api/leads?action=today');
+          var todayData = await todayResp.json();
+          huntResult = '📅 오늘 수집: ' + todayData.length + '건\n\n';
+          todayData.slice(0,10).forEach(function(l,i){ huntResult += (i+1) + '. ' + (l.name||l.company||'?') + ' (' + l.score + '점)\n'; });
+        }
+        // 그 외 → Claude에게 컨텍스트 포함 질문
+        else {
+          var ctxResp = await fetch('/api/leads?action=summary');
+          var ctxData = await ctxResp.json();
+          var ctxText = '[가망고객 DB 현황: 총 ' + ctxData.total + '건, Hot ' + ctxData.hot + '건] ' + huntText;
+          var claudeResult = await callClaude(agent, ctxText);
+          huntResult = (claudeResult && claudeResult.result) ? claudeResult.result : '질문을 이해하지 못했습니다. 다시 시도해주세요.';
+        }
+        order.status = 'done';
+        order.completedAt = new Date().toISOString();
+        order.result = { summary: huntResult.slice(0,200), detail: huntResult };
+      } catch(e) {
+        order.status = 'done';
+        order.completedAt = new Date().toISOString();
+        order.result = { summary: '❌ 오류: ' + e.message, detail: '오류가 발생했습니다: ' + e.message };
+      }
+    }
+    // 일반 에이전트: Claude API 호출
+    else {
     try {
       var claudeResult = await callClaude(agent, order.orderText);
       if (claudeResult && claudeResult.result) {
@@ -3135,6 +3193,7 @@ async function processQueue() {
       order.status = 'done';
       order.completedAt = new Date().toISOString();
       order.result = generateResult(order);
+    }
     }
 
     // 채팅 히스토리 업데이트
