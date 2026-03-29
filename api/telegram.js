@@ -147,14 +147,22 @@ async function handleCommand(chatId, text) {
 
   // /csv — CSV 파일 전송
   if (cmd === '/csv' || cmd === '/엑셀') {
-    const leads = await sbFetch('leads?select=*&order=business_unit,score.desc');
-    const arr = Array.isArray(leads) ? leads : [];
-    if (arr.length === 0) return sendTG(chatId, '📋 다운로드할 데이터가 없습니다.');
+    try {
+      const leads = await sbFetch('leads?select=name,company,phone,address,website_url,website_status,tags,need,grade,score,headcount,notes,created_at&order=score.desc');
+      const arr = Array.isArray(leads) ? leads : [];
+      if (arr.length === 0) return sendTG(chatId, '📋 다운로드할 데이터가 없습니다.');
 
-    const csv = leadsToCSV(arr);
-    const filename = 'leads_' + new Date().toISOString().split('T')[0] + '.csv';
-    await sendDocument(chatId, filename, csv);
-    return sendTG(chatId, '📋 *' + arr.length + '건* 데이터를 전송했습니다.');
+      const csv = leadsToCSV(arr);
+      const filename = 'leads_' + new Date().toISOString().split('T')[0] + '.csv';
+      const result = await sendDocument(chatId, filename, csv);
+      if (result && result.ok) {
+        return sendTG(chatId, '📋 *' + arr.length + '건* 데이터를 전송했습니다.');
+      } else {
+        return sendTG(chatId, '❌ 파일 전송 실패: ' + JSON.stringify(result).slice(0, 100));
+      }
+    } catch(e) {
+      return sendTG(chatId, '❌ CSV 생성 오류: ' + e.message);
+    }
   }
 
   // /수집 — 수동 크롤링 트리거
