@@ -128,6 +128,31 @@ module.exports = async function handler(req, res) {
       { keyword: '임실 펜션', unit: 'webdev', type: 'pension', zone: 5 },
       { keyword: '부안 글램핑', unit: 'webdev', type: 'glamping', zone: 5 },
       { keyword: '고창 글램핑', unit: 'webdev', type: 'glamping', zone: 5 },
+
+      // ═══ B팀 CNC 스토리팜 — 간판/각인/소품 제작 의뢰 타겟 ═══
+      // 새로 오픈하는 매장 (간판+인테리어소품 필요)
+      { keyword: '전주 카페', unit: 'cnc', type: 'cafe', zone: 2, reason: '신규/리뉴얼 간판+메뉴보드+인테리어소품 제작 의뢰' },
+      { keyword: '전주 식당', unit: 'cnc', type: 'restaurant', zone: 2, reason: '간판+메뉴판+인테리어 각인소품 제작 의뢰' },
+      { keyword: '전주 베이커리', unit: 'cnc', type: 'bakery', zone: 2, reason: '감성간판+로고각인+디스플레이소품 제작 의뢰' },
+      { keyword: '전주 네일샵', unit: 'cnc', type: 'nail', zone: 2, reason: '네온사인+인테리어소품+각인소품 제작 의뢰' },
+      { keyword: '전주 꽃집', unit: 'cnc', type: 'flower', zone: 2, reason: '감성간판+우드사인+각인화분 제작 의뢰' },
+      { keyword: '전주 소품샵', unit: 'cnc', type: 'shop', zone: 2, reason: '매장간판+디스플레이+각인소품 제작 의뢰' },
+      // 인테리어/리모델링 (소품/사인 필요)
+      { keyword: '전주 인테리어', unit: 'cnc', type: 'interior', zone: 2, reason: '인테리어소품/사인/각인물 납품처 확보' },
+      { keyword: '전주 리모델링', unit: 'cnc', type: 'remodel', zone: 2, reason: '리모델링 시 간판교체+소품 제작 의뢰' },
+      // 선물/기념품 수요
+      { keyword: '전주 스튜디오', unit: 'cnc', type: 'studio', zone: 2, reason: '포토존사인+인테리어소품+각인액자 제작 의뢰' },
+      { keyword: '전주 헬스장', unit: 'cnc', type: 'gym', zone: 2, reason: '간판+트로피/명패+인테리어사인 제작 의뢰' },
+      // 완주 권역
+      { keyword: '완주 카페', unit: 'cnc', type: 'cafe', zone: 1, reason: '신규/리뉴얼 간판+소품 제작 의뢰 (근거리)' },
+      { keyword: '완주 식당', unit: 'cnc', type: 'restaurant', zone: 1, reason: '간판+메뉴판 제작 의뢰 (근거리)' },
+      // 익산·김제 권역
+      { keyword: '익산 카페', unit: 'cnc', type: 'cafe', zone: 3, reason: '간판+인테리어소품 제작 의뢰' },
+      { keyword: '익산 식당', unit: 'cnc', type: 'restaurant', zone: 3, reason: '간판+메뉴판 제작 의뢰' },
+      { keyword: '김제 카페', unit: 'cnc', type: 'cafe', zone: 3, reason: '간판+소품 제작 의뢰' },
+      // 군산 권역
+      { keyword: '군산 카페', unit: 'cnc', type: 'cafe', zone: 4, reason: '간판+인테리어소품 제작 의뢰' },
+      { keyword: '군산 식당', unit: 'cnc', type: 'restaurant', zone: 4, reason: '간판+메뉴판 제작 의뢰' },
     ];
 
     // 매 실행마다 권역별 로테이션 (가까운 곳부터)
@@ -214,16 +239,17 @@ module.exports = async function handler(req, res) {
           website_status: siteStatus,
           business_unit: kw.unit,
           source: 'naver_map',
-          need: need,
-          score: score,
+          need: kw.unit === 'cnc' ? '🔧 ' + (kw.reason || '간판/소품 제작 제안 대상') : need,
+          score: kw.unit === 'cnc' ? (isActive ? 20 : 10) + (blogCount >= 100 ? 15 : blogCount >= 30 ? 10 : blogCount >= 10 ? 5 : 0) : score,
           customer_type: 'b2b',
-          assigned_to: 'D-LEAD',
+          assigned_to: kw.unit === 'cnc' ? 'B-LEAD' : 'D-LEAD',
           headcount: blogCount > 0 ? '블로그리뷰 ' + blogCount + '건' : null,
           interest: [kw.type],
-          tags: [category, kw.type, priority, siteStatus, kw.zone + '권역', blogCount >= 30 ? '인기업체' : ''].filter(Boolean),
+          tags: [category, kw.type, priority, siteStatus, kw.zone + '권역', kw.unit === 'cnc' ? 'CNC타겟' : '', blogCount >= 30 ? '인기업체' : ''].filter(Boolean),
           notes: [
             '🏷️ 우선순위: ' + priority + ' | ' + kw.zone + '권역',
             '📌 업종: ' + (category || kw.type),
+            kw.reason ? '🎯 타겟이유: ' + kw.reason : '',
             '📞 전화: ' + (phone || '미등록'),
             '📝 블로그 리뷰: ' + blogCount + '건' + (blogCount >= 30 ? ' ⭐인기!' : ''),
             '🌐 관리채널: ' + (link || '없음') + ' (' + siteStatus + ')',
@@ -231,7 +257,7 @@ module.exports = async function handler(req, res) {
             '📍 지번: ' + (item.address || '-'),
             '📍 도로명: ' + (item.roadAddress || '-'),
             mapUrl ? '🗺️ 지도: ' + mapUrl : '',
-            '🔍 키워드: ' + kw.keyword,
+            '🔍 검색키워드: ' + kw.keyword,
             '📅 수집: ' + new Date().toISOString().split('T')[0]
           ].filter(Boolean).join('\n')
         };
