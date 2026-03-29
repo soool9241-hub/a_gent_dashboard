@@ -112,8 +112,8 @@ module.exports = async function handler(req, res) {
           assigned_to: kw.unit === 'webdev' ? 'D-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : 'B-LEAD'
         };
 
-        // 전화번호 없으면 스킵
-        if (!lead.phone) continue;
+        // 이름 없으면 스킵
+        if (!name) continue;
 
         const result = await saveLead(lead);
         totalCollected++;
