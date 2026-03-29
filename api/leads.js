@@ -1,7 +1,7 @@
 const https = require('https');
 
-const SB_URL = (process.env.SUPABASE_URL || 'https://pcgzuvnvcxoobkcluksz.supabase.co').replace(/\/$/, '');
-const SB_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const SB_URL = (process.env.SUPABASE_URL || 'https://pcgzuvnvcxoobkcluksz.supabase.co').replace(/\/$/, '').trim();
+const SB_KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
 
 function sbFetch(path, method, body) {
   return new Promise((resolve, reject) => {

@@ -1,11 +1,11 @@
 const https = require('https');
 
-const SB_URL = (process.env.SUPABASE_URL || 'https://pcgzuvnvcxoobkcluksz.supabase.co').replace(/\/$/, '');
-const SB_KEY = process.env.SUPABASE_SERVICE_KEY || '';
-const NAVER_ID = process.env.NAVER_CLIENT_ID || '';
-const NAVER_SECRET = process.env.NAVER_CLIENT_SECRET || '';
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TG_CHAT = process.env.TELEGRAM_CHAT_ID || '';
+const SB_URL = (process.env.SUPABASE_URL || 'https://pcgzuvnvcxoobkcluksz.supabase.co').replace(/\/$/, '').trim();
+const SB_KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
+const NAVER_ID = (process.env.NAVER_CLIENT_ID || '').trim();
+const NAVER_SECRET = (process.env.NAVER_CLIENT_SECRET || '').trim();
+const TG_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+const TG_CHAT = (process.env.TELEGRAM_CHAT_ID || '').trim();
 
 function httpReq(url, options, body) {
   return new Promise((resolve, reject) => {
