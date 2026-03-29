@@ -70,19 +70,42 @@ module.exports = async function handler(req, res) {
   try {
     // 크롤링 키워드 목록
     const keywords = [
+      // A팀 - 달팽이아지트 (펜션/숙박)
+      { keyword: '완주 펜션', unit: 'pension', type: 'pension' },
+      { keyword: '전주 펜션', unit: 'pension', type: 'pension' },
+      { keyword: '전주 글램핑', unit: 'pension', type: 'glamping' },
+      { keyword: '완주 캠핑장', unit: 'pension', type: 'camping' },
+      { keyword: '전주 게스트하우스', unit: 'pension', type: 'guesthouse' },
+      { keyword: '완주 숙박', unit: 'pension', type: 'lodging' },
+
+      // B팀 - 스토리팜 (CNC/공방/제작)
+      { keyword: '전주 인테리어', unit: 'cnc', type: 'interior' },
+      { keyword: '전주 간판', unit: 'cnc', type: 'sign' },
+      { keyword: '전주 공방', unit: 'cnc', type: 'workshop' },
+      { keyword: '전주 목공', unit: 'cnc', type: 'woodwork' },
+      { keyword: '전주 네온사인', unit: 'cnc', type: 'neon' },
+      { keyword: '전주 각인', unit: 'cnc', type: 'engraving' },
+
+      // C팀 - AI자동화 (마케팅/자동화 니즈)
+      { keyword: '전주 쇼핑몰', unit: 'automation', type: 'shop' },
+      { keyword: '전주 온라인마케팅', unit: 'automation', type: 'marketing' },
+      { keyword: '전주 SNS대행', unit: 'automation', type: 'sns' },
+      { keyword: '전주 블로그대행', unit: 'automation', type: 'blog' },
+
+      // D팀 - 웹개발 (홈페이지 필요 업종)
       { keyword: '전주 카페', unit: 'webdev', type: 'cafe' },
       { keyword: '전주 음식점', unit: 'webdev', type: 'restaurant' },
       { keyword: '전주 미용실', unit: 'webdev', type: 'beauty' },
       { keyword: '전주 학원', unit: 'webdev', type: 'academy' },
       { keyword: '전주 병원', unit: 'webdev', type: 'hospital' },
-      { keyword: '완주 펜션', unit: 'pension', type: 'pension' },
-      { keyword: '전주 펜션', unit: 'pension', type: 'pension' },
-      { keyword: '전주 인테리어', unit: 'cnc', type: 'interior' },
-      { keyword: '전주 간판', unit: 'cnc', type: 'sign' },
-      { keyword: '전주 공방', unit: 'cnc', type: 'workshop' },
+      { keyword: '전주 치과', unit: 'webdev', type: 'dental' },
+      { keyword: '전주 헬스장', unit: 'webdev', type: 'gym' },
+      { keyword: '전주 부동산', unit: 'webdev', type: 'realestate' },
+      { keyword: '전주 꽃집', unit: 'webdev', type: 'flower' },
+      { keyword: '전주 세무사', unit: 'webdev', type: 'tax' },
     ];
 
-    // 매 실행마다 2~3개 키워드 로테이션
+    // 매 실행마다 6~7개 키워드 로테이션 (사업부 골고루)
     const hour = new Date().getHours();
     const batch = keywords.filter((_, i) => i % 4 === (hour % 4));
 
@@ -109,7 +132,7 @@ module.exports = async function handler(req, res) {
           need: hasWeb ? '리뉴얼 검토 대상' : '홈페이지 없음 - 제작 필요',
           score: hasWeb ? 5 : 20,
           customer_type: 'b2c',
-          assigned_to: kw.unit === 'webdev' ? 'D-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : 'B-LEAD'
+          assigned_to: kw.unit === 'webdev' ? 'D-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : kw.unit === 'automation' ? 'C-LEAD' : 'B-LEAD'
         };
 
         // 이름 없으면 스킵
