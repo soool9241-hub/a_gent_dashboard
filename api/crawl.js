@@ -70,39 +70,32 @@ module.exports = async function handler(req, res) {
   try {
     // 크롤링 키워드 목록
     const keywords = [
-      // A팀 - 달팽이아지트 (펜션 숙박 판매 → 단체/기업/여행사가 가망고객)
-      { keyword: '전주 여행사', unit: 'pension', type: 'travel' },
-      { keyword: '전주 기업연수', unit: 'pension', type: 'corporate' },
-      { keyword: '전주 단체숙박', unit: 'pension', type: 'group' },
-      { keyword: '전주 웨딩플래너', unit: 'pension', type: 'wedding' },
-      { keyword: '전주 동호회', unit: 'pension', type: 'club' },
-      { keyword: '완주 워크숍', unit: 'pension', type: 'workshop' },
-
-      // B팀 - 스토리팜 (간판/각인/CNC제작 → 새 매장/카페/식당이 가망고객)
-      { keyword: '전주 카페', unit: 'cnc', type: 'cafe' },
-      { keyword: '전주 신규오픈', unit: 'cnc', type: 'newopen' },
-      { keyword: '전주 식당', unit: 'cnc', type: 'restaurant' },
-      { keyword: '전주 네일샵', unit: 'cnc', type: 'nail' },
-      { keyword: '전주 베이커리', unit: 'cnc', type: 'bakery' },
-      { keyword: '전주 소품샵', unit: 'cnc', type: 'shop' },
-
-      // C팀 - AI자동화 (마케팅자동화 판매 → SNS/마케팅 고민 소상공인이 가망고객)
-      { keyword: '전주 소상공인', unit: 'automation', type: 'small_biz' },
-      { keyword: '전주 창업', unit: 'automation', type: 'startup' },
-      { keyword: '전주 쇼핑몰', unit: 'automation', type: 'shop' },
-      { keyword: '전주 반영구', unit: 'automation', type: 'beauty' },
-      { keyword: '전주 필라테스', unit: 'automation', type: 'pilates' },
-      { keyword: '전주 네일아트', unit: 'automation', type: 'nail' },
-
-      // D팀 - 웹개발 (홈페이지 제작 → 홈페이지 없는 업체가 가망고객)
-      { keyword: '전주 미용실', unit: 'webdev', type: 'beauty' },
-      { keyword: '전주 학원', unit: 'webdev', type: 'academy' },
-      { keyword: '전주 병원', unit: 'webdev', type: 'hospital' },
-      { keyword: '전주 치과', unit: 'webdev', type: 'dental' },
-      { keyword: '전주 헬스장', unit: 'webdev', type: 'gym' },
-      { keyword: '전주 부동산', unit: 'webdev', type: 'realestate' },
-      { keyword: '전주 세무사', unit: 'webdev', type: 'tax' },
-      { keyword: '전주 법무사', unit: 'webdev', type: 'legal' },
+      // 공간 운영자 타겟 — 펜션 홈페이지 제작 상품 판매용
+      // 기존 펜션/숙박 운영자 (홈페이지 없거나 허접한 곳)
+      { keyword: '전주 펜션', unit: 'webdev', type: 'pension' },
+      { keyword: '완주 펜션', unit: 'webdev', type: 'pension' },
+      { keyword: '전주 게스트하우스', unit: 'webdev', type: 'guesthouse' },
+      { keyword: '완주 게스트하우스', unit: 'webdev', type: 'guesthouse' },
+      { keyword: '전주 한옥스테이', unit: 'webdev', type: 'hanok' },
+      { keyword: '완주 한옥스테이', unit: 'webdev', type: 'hanok' },
+      // 글램핑/캠핑 운영자
+      { keyword: '전주 글램핑', unit: 'webdev', type: 'glamping' },
+      { keyword: '완주 글램핑', unit: 'webdev', type: 'glamping' },
+      { keyword: '전주 캠핑장', unit: 'webdev', type: 'camping' },
+      { keyword: '완주 캠핑장', unit: 'webdev', type: 'camping' },
+      // 독채/파티룸/공유공간 운영자
+      { keyword: '전주 독채', unit: 'webdev', type: 'private' },
+      { keyword: '완주 독채', unit: 'webdev', type: 'private' },
+      { keyword: '전주 파티룸', unit: 'webdev', type: 'partyroom' },
+      { keyword: '전주 스튜디오', unit: 'webdev', type: 'studio' },
+      // 숙박/민박/카라반
+      { keyword: '전주 숙박', unit: 'webdev', type: 'lodging' },
+      { keyword: '완주 숙박', unit: 'webdev', type: 'lodging' },
+      { keyword: '전주 민박', unit: 'webdev', type: 'minbak' },
+      { keyword: '전주 카라반', unit: 'webdev', type: 'caravan' },
+      // 공유/복합 공간
+      { keyword: '전주 공유공간', unit: 'webdev', type: 'shared' },
+      { keyword: '전주 코워킹스페이스', unit: 'webdev', type: 'cowork' },
     ];
 
     // 매 실행마다 6~7개 키워드 로테이션 (사업부 골고루)
@@ -129,15 +122,11 @@ module.exports = async function handler(req, res) {
           website_status: hasWeb ? 'exists' : 'none',
           business_unit: kw.unit,
           source: 'naver_map',
-          need: kw.unit === 'pension' ? '단체숙박/워크숍 유치 대상'
-              : kw.unit === 'cnc' ? '간판/인테리어소품 제작 제안 대상'
-              : kw.unit === 'automation' ? (hasWeb ? 'SNS/마케팅 자동화 제안' : 'SNS+홈페이지 패키지 제안')
-              : (hasWeb ? '홈페이지 리뉴얼 검토' : '홈페이지 없음 - 제작 필요'),
-          score: kw.unit === 'pension' ? 15
-              : kw.unit === 'cnc' ? 15
-              : hasWeb ? 5 : 20,
-          customer_type: kw.unit === 'pension' ? 'b2b' : 'b2c',
-          assigned_to: kw.unit === 'webdev' ? 'D-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : kw.unit === 'automation' ? 'C-LEAD' : 'B-LEAD'
+          need: !hasWeb ? '🔥 홈페이지 없음 — 펜션사이트 제작 제안'
+              : '기존 사이트 보유 — 리뉴얼/자동화 업그레이드 제안',
+          score: !hasWeb ? 25 : (item.link && item.link.includes('blog') ? 15 : 5),
+          customer_type: 'b2b',
+          assigned_to: 'D-LEAD'
         };
 
         // 이름 없으면 스킵
