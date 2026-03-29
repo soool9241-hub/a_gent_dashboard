@@ -113,20 +113,40 @@ module.exports = async function handler(req, res) {
       for (const item of items) {
         const name = (item.title || '').replace(/<[^>]*>/g, '');
         const hasWeb = item.link && item.link.trim() !== '';
+        const hasBlog = hasWeb && item.link.includes('blog');
+        const category = item.category || '';
+        const desc = item.description || '';
+        const mapUrl = item.mapUrl || '';
+
+        // 네이버에서 얻을 수 있는 모든 정보 저장
         const lead = {
           name: name,
           company: name,
           phone: item.telephone || null,
           address: item.roadAddress || item.address || null,
           website_url: item.link || null,
-          website_status: hasWeb ? 'exists' : 'none',
+          website_status: !hasWeb ? 'none' : hasBlog ? 'blog_only' : 'exists',
           business_unit: kw.unit,
           source: 'naver_map',
           need: !hasWeb ? '🔥 홈페이지 없음 — 펜션사이트 제작 제안'
+              : hasBlog ? '⚡ 블로그만 운영 — 전문 사이트 필요'
               : '기존 사이트 보유 — 리뉴얼/자동화 업그레이드 제안',
-          score: !hasWeb ? 25 : (item.link && item.link.includes('blog') ? 15 : 5),
+          score: !hasWeb ? 25 : hasBlog ? 15 : 5,
           customer_type: 'b2b',
-          assigned_to: 'D-LEAD'
+          assigned_to: 'D-LEAD',
+          interest: [kw.type],
+          tags: [category, kw.type].filter(Boolean),
+          notes: [
+            '📌 업종: ' + (category || kw.type),
+            desc ? '📝 설명: ' + desc.replace(/<[^>]*>/g, '') : '',
+            '📍 지번주소: ' + (item.address || '-'),
+            '📍 도로명: ' + (item.roadAddress || '-'),
+            '🌐 홈페이지: ' + (item.link || '없음'),
+            '📞 전화: ' + (item.telephone || '없음'),
+            mapUrl ? '🗺️ 네이버지도: ' + mapUrl : '',
+            '🔍 검색키워드: ' + kw.keyword,
+            '📅 수집일: ' + new Date().toISOString().split('T')[0]
+          ].filter(Boolean).join('\n')
         };
 
         // 이름 없으면 스킵

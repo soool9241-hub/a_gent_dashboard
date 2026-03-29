@@ -70,13 +70,14 @@ async function sendDocument(chatId, filename, content) {
 function leadsToCSV(leads) {
   const units = { pension: 'A-달팽이아지트', cnc: 'B-스토리팜', automation: 'C-AI자동화', webdev: 'D-웹개발' };
   const BOM = '\uFEFF';
-  const headers = ['No','이름','전화번호','상호명','주소','사업부','출처','니즈','등급','스코어','웹사이트','수집일'];
+  const headers = ['No','상호명','전화번호','주소','홈페이지','사이트상태','업종태그','니즈','등급','스코어','비고(상세)','수집일'];
   let csv = BOM + headers.join(',') + '\n';
   leads.forEach((l, i) => {
     const row = [
-      i+1, l.name||'', l.phone||'', l.company||'', l.address||'',
-      units[l.business_unit]||l.business_unit||'', l.source||'', l.need||'',
-      l.grade||'', l.score||0, l.website_url||'',
+      i+1, l.company||l.name||'', l.phone||'', l.address||'',
+      l.website_url||'없음', l.website_status||'', (l.tags||[]).join('/'),
+      l.need||'', l.grade||'', l.score||0,
+      (l.notes||'').replace(/\n/g,' | '),
       l.created_at ? l.created_at.split('T')[0] : ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
     csv += row.join(',') + '\n';
