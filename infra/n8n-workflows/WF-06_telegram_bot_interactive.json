@@ -1,0 +1,303 @@
+{
+  "name": "WF-06 텔레그램 대화형 봇 (리드 조회+CSV+알림)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "텔레그램 메시지 수신",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 400],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json.message.text || '';\nconst cmd = msg.trim().toLowerCase();\n\n// 명령어 파싱\nlet action = 'unknown';\nlet params = {};\n\nif (cmd === '/현황' || cmd === '/status' || cmd.includes('현황') || cmd.includes('리드')) {\n  action = 'status';\n} else if (cmd === '/hot' || cmd.includes('핫') || cmd.includes('hot')) {\n  action = 'hot_leads';\n} else if (cmd === '/csv' || cmd.includes('csv') || cmd.includes('다운') || cmd.includes('엑셀')) {\n  action = 'csv_download';\n} else if (cmd === '/도움' || cmd === '/help' || cmd === '/start' || cmd.includes('도움')) {\n  action = 'help';\n} else if (cmd.startsWith('/사업부')) {\n  action = 'by_unit';\n  const unit = cmd.replace('/사업부', '').trim();\n  if (unit.includes('a') || unit.includes('펜션') || unit.includes('달팽이')) params.unit = 'pension';\n  else if (unit.includes('b') || unit.includes('공방') || unit.includes('스토리')) params.unit = 'cnc';\n  else if (unit.includes('c') || unit.includes('자동화') || unit.includes('ai')) params.unit = 'automation';\n  else if (unit.includes('d') || unit.includes('웹') || unit.includes('개발')) params.unit = 'webdev';\n  else params.unit = 'all';\n} else if (cmd === '/오늘' || cmd.includes('오늘')) {\n  action = 'today';\n} else if (cmd === '/이번주' || cmd.includes('이번주') || cmd.includes('주간')) {\n  action = 'weekly';\n} else if (cmd === '/검색' || cmd.startsWith('/검색 ')) {\n  action = 'search';\n  params.query = cmd.replace('/검색', '').trim();\n} else {\n  action = 'help';\n}\n\nreturn [{ json: { action, params, chatId: $input.first().json.message.chat.id } }];"
+      },
+      "id": "parse-command",
+      "name": "명령어 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            { "outputKey": "status", "conditions": { "conditions": [{ "leftValue": "={{$json.action}}", "rightValue": "status", "operator": { "type": "string", "operation": "equals" } }] } },
+            { "outputKey": "hot", "conditions": { "conditions": [{ "leftValue": "={{$json.action}}", "rightValue": "hot_leads", "operator": { "type": "string", "operation": "equals" } }] } },
+            { "outputKey": "csv", "conditions": { "conditions": [{ "leftValue": "={{$json.action}}", "rightValue": "csv_download", "operator": { "type": "string", "operation": "equals" } }] } },
+            { "outputKey": "today", "conditions": { "conditions": [{ "leftValue": "={{$json.action}}", "rightValue": "today", "operator": { "type": "string", "operation": "equals" } }] } },
+            { "outputKey": "help", "conditions": { "conditions": [{ "leftValue": "={{$json.action}}", "rightValue": "help", "operator": { "type": "string", "operation": "equals" } }] } }
+          ],
+          "fallbackOutput": "help"
+        }
+      },
+      "id": "router",
+      "name": "명령어 라우터",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads?select=business_unit,stage,score,source&order=created_at.desc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-all-leads",
+      "name": "전체 리드 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().map(i => i.json);\nconst flat = Array.isArray(leads[0]) ? leads[0] : leads;\n\nconst units = { pension: '🏕️A-달팽이', cnc: '🔨B-스토리팜', automation: '🤖C-AI자동화', webdev: '💻D-웹개발' };\nconst byUnit = {};\nconst byStage = { cold: 0, warm: 0, hot: 0, customer: 0, fan: 0 };\n\nflat.forEach(l => {\n  byUnit[l.business_unit] = (byUnit[l.business_unit] || 0) + 1;\n  if (l.stage) byStage[l.stage]++;\n});\n\nconst total = flat.length;\nconst hotCount = flat.filter(l => l.score >= 50).length;\n\nlet msg = `📊 *가망고객 수집 현황*\\n━━━━━━━━━━━━━━\\n\\n`;\nmsg += `📦 *총 리드: ${total}건*\\n`;\nmsg += `🔥 Hot 리드: ${hotCount}건\\n\\n`;\nmsg += `🏢 *사업부별*\\n`;\nObject.entries(byUnit).forEach(([k, v]) => {\n  msg += `  ${units[k] || k}: ${v}건\\n`;\n});\nmsg += `\\n📊 *등급별*\\n`;\nmsg += `  ❄️Cold: ${byStage.cold} | 🌡Warm: ${byStage.warm} | 🔥Hot: ${byStage.hot}\\n`;\nmsg += `  ✅Customer: ${byStage.customer} | ⭐Fan: ${byStage.fan}\\n`;\nmsg += `\\n💡 /hot → Hot 리드 목록\\n💡 /csv → CSV 다운로드\\n💡 /오늘 → 오늘 수집분`;\n\nreturn [{ json: { text: msg } }];"
+      },
+      "id": "format-status",
+      "name": "현황 포맷",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads?score=gte.50&select=name,phone,email,company,business_unit,score,need,created_at&order=score.desc&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-hot-leads",
+      "name": "Hot 리드 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 360]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().map(i => i.json);\nconst flat = Array.isArray(leads[0]) ? leads[0] : leads;\n\nconst units = { pension: '🏕️', cnc: '🔨', automation: '🤖', webdev: '💻' };\n\nif (flat.length === 0) {\n  return [{ json: { text: '🔥 *Hot 리드 없음*\\n\\n아직 스코어 50점 이상 리드가 없습니다.\\n크롤링이 더 돌아야 합니다!' } }];\n}\n\nlet msg = `🔥 *Hot 리드 TOP ${Math.min(flat.length, 20)}*\\n━━━━━━━━━━━━━━\\n\\n`;\n\nflat.slice(0, 20).forEach((l, i) => {\n  msg += `*${i+1}. ${l.name || '이름없음'}* ${units[l.business_unit] || ''} (${l.score}점)\\n`;\n  if (l.company) msg += `  🏢 ${l.company}\\n`;\n  if (l.phone) msg += `  📱 ${l.phone}\\n`;\n  if (l.email) msg += `  📧 ${l.email}\\n`;\n  if (l.need) msg += `  💡 ${l.need}\\n`;\n  msg += `\\n`;\n});\n\nmsg += `\\n📞 *즉시 연락 필요!*`;\n\nreturn [{ json: { text: msg } }];"
+      },
+      "id": "format-hot",
+      "name": "Hot 리드 포맷",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 360]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads?select=name,phone,email,company,address,business_unit,source,interest,need,stage,score,grade,website_url,website_status,created_at&order=business_unit,score.desc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-all-for-csv",
+      "name": "CSV용 전체 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().map(i => i.json);\nconst flat = Array.isArray(leads[0]) ? leads[0] : leads;\n\nconst units = { pension: 'A-달팽이아지트', cnc: 'B-스토리팜', automation: 'C-AI자동화', webdev: 'D-웹개발' };\n\n// BOM for Excel Korean support\nconst BOM = '\\uFEFF';\nconst headers = ['No','이름','전화번호','이메일','상호명','주소','사업부','출처','관심분야','니즈','등급','스코어','웹사이트','웹상태','수집일'];\nlet csv = BOM + headers.join(',') + '\\n';\n\nflat.forEach((l, i) => {\n  const row = [\n    i + 1,\n    l.name || '',\n    l.phone || '',\n    l.email || '',\n    l.company || '',\n    l.address || '',\n    units[l.business_unit] || l.business_unit || '',\n    l.source || '',\n    Array.isArray(l.interest) ? l.interest.join(';') : (l.interest || ''),\n    l.need || '',\n    l.grade || '',\n    l.score || 0,\n    l.website_url || '',\n    l.website_status || '',\n    l.created_at ? l.created_at.split('T')[0] : ''\n  ].map(v => `\"${String(v).replace(/\"/g, '\"\"')}\"`);\n  csv += row.join(',') + '\\n';\n});\n\n// CSV를 바이너리로 변환\nconst buffer = Buffer.from(csv, 'utf-8');\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: { total: flat.length, filename: `leads_${today}.csv` },\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'text/csv',\n      fileName: `가망고객_리드_${today}.csv`,\n      fileExtension: 'csv'\n    }\n  }\n}];"
+      },
+      "id": "generate-csv",
+      "name": "CSV 파일 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 520]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads?created_at=gte.{{new Date(new Date().setHours(0,0,0,0)).toISOString()}}&select=name,phone,company,business_unit,score,source,need&order=score.desc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-today",
+      "name": "오늘 수집분 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 680]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().map(i => i.json);\nconst flat = Array.isArray(leads[0]) ? leads[0] : leads;\nconst units = { pension: '🏕️', cnc: '🔨', automation: '🤖', webdev: '💻' };\n\nif (flat.length === 0) {\n  return [{ json: { text: '📅 *오늘 수집: 0건*\\n\\n아직 오늘 수집된 리드가 없습니다.' } }];\n}\n\nlet msg = `📅 *오늘 수집 현황*\\n━━━━━━━━━━━━━━\\n\\n`;\nmsg += `📦 총 ${flat.length}건 수집\\n\\n`;\n\nflat.slice(0, 30).forEach((l, i) => {\n  const icon = l.score >= 50 ? '🔥' : l.score >= 20 ? '🌡' : '❄️';\n  msg += `${icon} *${l.name || l.company || '이름없음'}* ${units[l.business_unit]||''} (${l.score}점)\\n`;\n  if (l.phone) msg += `  📱 ${l.phone}\\n`;\n  if (l.need) msg += `  💡 ${l.need}\\n`;\n});\n\nif (flat.length > 30) msg += `\\n... 외 ${flat.length - 30}건`;\n\nreturn [{ json: { text: msg } }];"
+      },
+      "id": "format-today",
+      "name": "오늘 수집 포맷",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 680]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chatId || $env.TELEGRAM_CHAT_ID}}",
+        "text": "=📋 *가망고객 봇 명령어*\\n━━━━━━━━━━━━━━\\n\\n/현황 — 전체 리드 현황 요약\\n/hot — 🔥 Hot 리드 목록 (즉시 연락 필요)\\n/오늘 — 오늘 수집된 리드\\n/이번주 — 이번 주 수집 현황\\n/csv — 📎 전체 리드 CSV 파일 다운로드\\n/사업부 a — 사업부별 현황 (a/b/c/d)\\n/검색 카페 — 키워드 검색\\n\\n💡 아무 말이나 보내도 이 도움말이 나옵니다",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-help",
+      "name": "도움말 전송",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 840],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "={{$json.text}}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-status",
+      "name": "현황 전송",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 200],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "={{$json.text}}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-hot",
+      "name": "Hot 리드 전송",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 360],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "=📎 *가망고객 CSV 파일* (총 {{$json.total}}건)\\n\\n엑셀에서 열어 확인하세요!",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-csv-msg",
+      "name": "CSV 안내 메시지",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 480],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "가망고객 리드 전체 데이터",
+          "fileName": "={{$json.filename}}"
+        }
+      },
+      "id": "send-csv-file",
+      "name": "CSV 파일 전송",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 580],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "={{$json.text}}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-today",
+      "name": "오늘 수집 전송",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 680],
+      "credentials": {
+        "telegramApi": { "id": "telegram-cred", "name": "Telegram Bot" }
+      }
+    }
+  ],
+  "connections": {
+    "텔레그램 메시지 수신": {
+      "main": [[{ "node": "명령어 파싱", "type": "main", "index": 0 }]]
+    },
+    "명령어 파싱": {
+      "main": [[{ "node": "명령어 라우터", "type": "main", "index": 0 }]]
+    },
+    "명령어 라우터": {
+      "main": [
+        [{ "node": "전체 리드 조회", "type": "main", "index": 0 }],
+        [{ "node": "Hot 리드 조회", "type": "main", "index": 0 }],
+        [{ "node": "CSV용 전체 조회", "type": "main", "index": 0 }],
+        [{ "node": "오늘 수집분 조회", "type": "main", "index": 0 }],
+        [{ "node": "도움말 전송", "type": "main", "index": 0 }]
+      ]
+    },
+    "전체 리드 조회": {
+      "main": [[{ "node": "현황 포맷", "type": "main", "index": 0 }]]
+    },
+    "현황 포맷": {
+      "main": [[{ "node": "현황 전송", "type": "main", "index": 0 }]]
+    },
+    "Hot 리드 조회": {
+      "main": [[{ "node": "Hot 리드 포맷", "type": "main", "index": 0 }]]
+    },
+    "Hot 리드 포맷": {
+      "main": [[{ "node": "Hot 리드 전송", "type": "main", "index": 0 }]]
+    },
+    "CSV용 전체 조회": {
+      "main": [[{ "node": "CSV 파일 생성", "type": "main", "index": 0 }]]
+    },
+    "CSV 파일 생성": {
+      "main": [
+        [
+          { "node": "CSV 안내 메시지", "type": "main", "index": 0 },
+          { "node": "CSV 파일 전송", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "오늘 수집분 조회": {
+      "main": [[{ "node": "오늘 수집 포맷", "type": "main", "index": 0 }]]
+    },
+    "오늘 수집 포맷": {
+      "main": [[{ "node": "오늘 수집 전송", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "텔레그램봇" }, { "name": "대화형" }]
+}
