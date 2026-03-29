@@ -40,29 +40,31 @@ async function sendTG(chatId, text, opts) {
 async function sendDocument(chatId, filename, content) {
   return new Promise((resolve, reject) => {
     const boundary = '----FormBoundary' + Date.now();
-    const body = Buffer.concat([
-      Buffer.from(
-        '--' + boundary + '\r\n' +
-        'Content-Disposition: form-data; name="chat_id"\r\n\r\n' + chatId + '\r\n' +
-        '--' + boundary + '\r\n' +
-        'Content-Disposition: form-data; name="document"; filename="' + filename + '"\r\n' +
-        'Content-Type: text/csv\r\n\r\n'
-      ),
-      Buffer.from(content, 'utf-8'),
-      Buffer.from('\r\n--' + boundary + '--\r\n')
-    ]);
+    const fileBuffer = Buffer.from(content, 'utf-8');
+    const header = '--' + boundary + '\r\n' +
+      'Content-Disposition: form-data; name="chat_id"\r\n\r\n' + chatId + '\r\n' +
+      '--' + boundary + '\r\n' +
+      'Content-Disposition: form-data; name="document"; filename="' + filename + '"\r\n' +
+      'Content-Type: application/octet-stream\r\n\r\n';
+    const footer = '\r\n--' + boundary + '--\r\n';
+    const headerBuf = Buffer.from(header, 'utf-8');
+    const footerBuf = Buffer.from(footer, 'utf-8');
+    const body = Buffer.concat([headerBuf, fileBuffer, footerBuf]);
+
     const u = new URL('https://api.telegram.org/bot' + TG_TOKEN + '/sendDocument');
     const req = https.request({
       hostname: u.hostname, path: u.pathname,
       method: 'POST',
-      headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary, 'Content-Length': body.length }
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        'Content-Length': Buffer.byteLength(body)
+      }
     }, res => {
       let d = ''; res.on('data', c => d += c);
       res.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { resolve(d); } });
     });
     req.on('error', reject);
-    req.write(body);
-    req.end();
+    req.end(body);
   });
 }
 
