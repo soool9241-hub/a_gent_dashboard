@@ -3909,6 +3909,43 @@ setTimeout(()=>{
   renderTeamGrid('agents-grid-C','C');
   renderTeamGrid('agents-grid-D','D');
 },0);
+
+// 실시간 가망고객 수집 현황 반영
+(async function loadLeadStatus(){
+  try {
+    const resp = await fetch('/api/leads?action=summary');
+    const data = await resp.json();
+    if(!data || !data.total) return;
+    const unitMap = {pension:'A',cnc:'B',automation:'C',webdev:'D'};
+    // LEAD 에이전트 상태 업데이트
+    ['A-LEAD','B-LEAD','C-LEAD','D-LEAD'].forEach(code=>{
+      const a = AGENTS.find(x=>x.code===code); if(!a) return;
+      a.status = 'active';
+      a.last = '오늘';
+    });
+    // 가망고객헌터도 활성화
+    ['A-R2','B-R2'].forEach(code=>{
+      const a = AGENTS.find(x=>x.code===code); if(!a) return;
+      a.status = 'active';
+      a.last = '오늘';
+    });
+    // 로그 업데이트
+    const unitNames = {pension:'펜션/숙박',cnc:'CNC/공방',automation:'AI자동화',webdev:'웹개발'};
+    Object.keys(data.byUnit||{}).forEach(u=>{
+      const team = unitMap[u];
+      const leadCode = team+'-LEAD';
+      const a = AGENTS.find(x=>x.code===leadCode); if(!a) return;
+      a.log = '🟢 실시간 수집 중 — '+unitNames[u]+' 가망고객 '+data.byUnit[u]+'명 수집 완료 (총 '+data.total+'명)';
+      a.kpi = Math.min(100, Math.round(data.byUnit[u] / 50 * 100));
+    });
+    // 그리드 다시 렌더
+    renderTeamGrid('agents-grid','ALL');
+    ['A','B','C','D'].forEach(t=>{
+      const el=document.getElementById('agents-grid-'+t);
+      if(el) renderTeamGrid('agents-grid-'+t,t);
+    });
+  } catch(e){ console.log('Lead status load:', e); }
+})();
 </script>
 </body>
 </html>
