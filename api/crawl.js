@@ -112,40 +112,71 @@ module.exports = async function handler(req, res) {
 
       for (const item of items) {
         const name = (item.title || '').replace(/<[^>]*>/g, '');
-        const hasWeb = item.link && item.link.trim() !== '';
-        const hasBlog = hasWeb && item.link.includes('blog');
+        const link = (item.link || '').trim();
+        const phone = item.telephone || null;
         const category = item.category || '';
         const desc = item.description || '';
         const mapUrl = item.mapUrl || '';
 
-        // 네이버에서 얻을 수 있는 모든 정보 저장
+        // 홈페이지 상태 정밀 분류
+        const isSNS = link && (link.includes('instagram.com') || link.includes('youtube.com') || link.includes('facebook.com') || link.includes('twitter.com'));
+        const isBlog = link && (link.includes('blog.naver') || link.includes('blog.daum') || link.includes('tistory.com') || link.includes('brunch.co.kr'));
+        const isSmartStore = link && (link.includes('smartstore.naver') || link.includes('booking.naver'));
+        const hasRealSite = link && !isSNS && !isBlog && !isSmartStore;
+        const hasNoSite = !link;
+
+        // 사이트 상태
+        const siteStatus = hasNoSite ? 'none'
+          : isSNS ? 'sns_only'
+          : isBlog ? 'blog_only'
+          : isSmartStore ? 'smartstore'
+          : 'exists';
+
+        // 영업 중 판별 (전화번호 있으면 영업 중)
+        const isActive = !!phone;
+
+        // 스코어링: 영업중 + 홈페이지없음 = 최고점
+        let score, need, priority;
+        if (hasNoSite && isActive) {
+          score = 35; need = '🔥🔥 [1순위] 영업중인데 홈페이지 없음!'; priority = '1순위';
+        } else if (hasNoSite && !isActive) {
+          score = 25; need = '🔥 홈페이지 없음 — 제작 제안'; priority = '1순위';
+        } else if ((isSNS || isBlog) && isActive) {
+          score = 25; need = '⚡ [1순위] SNS/블로그만 운영 — 전문 사이트 필요'; priority = '1순위';
+        } else if ((isSNS || isBlog) && !isActive) {
+          score = 15; need = '⚡ SNS/블로그만 — 전문 사이트 제안'; priority = '2순위';
+        } else if (isSmartStore) {
+          score = 10; need = '💡 스마트스토어만 — 자체 브랜드사이트 제안'; priority = '2순위';
+        } else {
+          score = 5; need = '🔄 [2순위] 기존 사이트 보유 — 리뉴얼 검토'; priority = '2순위';
+        }
+
         const lead = {
           name: name,
           company: name,
-          phone: item.telephone || null,
+          phone: phone,
           address: item.roadAddress || item.address || null,
-          website_url: item.link || null,
-          website_status: !hasWeb ? 'none' : hasBlog ? 'blog_only' : 'exists',
+          website_url: link || null,
+          website_status: siteStatus,
           business_unit: kw.unit,
           source: 'naver_map',
-          need: !hasWeb ? '🔥 홈페이지 없음 — 펜션사이트 제작 제안'
-              : hasBlog ? '⚡ 블로그만 운영 — 전문 사이트 필요'
-              : '기존 사이트 보유 — 리뉴얼/자동화 업그레이드 제안',
-          score: !hasWeb ? 25 : hasBlog ? 15 : 5,
+          need: need,
+          score: score,
           customer_type: 'b2b',
           assigned_to: 'D-LEAD',
           interest: [kw.type],
-          tags: [category, kw.type].filter(Boolean),
+          tags: [category, kw.type, priority, siteStatus].filter(Boolean),
           notes: [
+            '🏷️ 우선순위: ' + priority,
             '📌 업종: ' + (category || kw.type),
+            '📞 전화: ' + (phone || '미등록'),
+            '🌐 관리채널: ' + (link || '없음') + ' (' + siteStatus + ')',
             desc ? '📝 설명: ' + desc.replace(/<[^>]*>/g, '') : '',
-            '📍 지번주소: ' + (item.address || '-'),
+            '📍 지번: ' + (item.address || '-'),
             '📍 도로명: ' + (item.roadAddress || '-'),
-            '🌐 홈페이지: ' + (item.link || '없음'),
-            '📞 전화: ' + (item.telephone || '없음'),
-            mapUrl ? '🗺️ 네이버지도: ' + mapUrl : '',
-            '🔍 검색키워드: ' + kw.keyword,
-            '📅 수집일: ' + new Date().toISOString().split('T')[0]
+            mapUrl ? '🗺️ 지도: ' + mapUrl : '',
+            '🔍 키워드: ' + kw.keyword,
+            '📅 수집: ' + new Date().toISOString().split('T')[0]
           ].filter(Boolean).join('\n')
         };
 
