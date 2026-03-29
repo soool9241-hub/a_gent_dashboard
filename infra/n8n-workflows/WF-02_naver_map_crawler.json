@@ -1,0 +1,107 @@
+{
+  "name": "WF-02 네이버지도 매장 크롤링 (D-LEAD 핵심)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+      },
+      "id": "cron-trigger",
+      "name": "6시간마다 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 네이버 지도 API로 매장 검색\n// 키워드 목록 (사업부별)\nconst keywords = [\n  { keyword: '전주 카페', business_unit: 'webdev', type: 'cafe' },\n  { keyword: '전주 음식점', business_unit: 'webdev', type: 'restaurant' },\n  { keyword: '전주 미용실', business_unit: 'webdev', type: 'beauty' },\n  { keyword: '전주 학원', business_unit: 'webdev', type: 'academy' },\n  { keyword: '완주 펜션', business_unit: 'pension', type: 'pension' },\n  { keyword: '전주 인테리어', business_unit: 'cnc', type: 'interior' },\n  { keyword: '전주 카페 인테리어', business_unit: 'cnc', type: 'cafe_interior' }\n];\n\n// 오늘 실행할 키워드 (로테이션)\nconst today = new Date().getDay(); // 0~6\nconst todayKeywords = keywords.filter((_, i) => i % 7 === today || keywords.length <= 7);\n\nreturn todayKeywords.map(k => ({ json: k }));"
+      },
+      "id": "keyword-generator",
+      "name": "키워드 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://openapi.naver.com/v1/search/local.json?query={{encodeURIComponent($json.keyword)}}&display=5&start=1&sort=random",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Naver-Client-Id", "value": "={{$env.NAVER_CLIENT_ID}}" },
+            { "name": "X-Naver-Client-Secret", "value": "={{$env.NAVER_CLIENT_SECRET}}" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "naver-search",
+      "name": "네이버 지역검색 API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 검색 결과 파싱 + 홈페이지 없는 곳 필터링\nconst items = $input.first().json.items || [];\nconst keyword = $input.first().json.keyword;\nconst business_unit = $input.first().json.business_unit;\n\nconst leads = items.map(item => {\n  // HTML 태그 제거\n  const name = item.title.replace(/<[^>]*>/g, '');\n  const hasWebsite = item.link && item.link.trim() !== '';\n  \n  return {\n    json: {\n      name: name,\n      company: name,\n      phone: item.telephone || '',\n      address: item.roadAddress || item.address || '',\n      website_url: item.link || '',\n      website_status: hasWebsite ? 'exists' : 'none',\n      business_unit: business_unit,\n      source: 'naver_map',\n      interest: [keyword],\n      need: hasWebsite ? '리뉴얼 가능' : '홈페이지 없음 — 제작 필요',\n      score: hasWebsite ? 5 : 20,  // 홈페이지 없는 곳이 더 높은 스코어\n      customer_type: 'b2c'\n    }\n  };\n});\n\nreturn leads;"
+      },
+      "id": "parse-results",
+      "name": "결과 파싱 + 필터",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=ignore-duplicates-on-conflict,return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{$json.name}}\",\n  \"company\": \"{{$json.company}}\",\n  \"phone\": \"{{$json.phone}}\",\n  \"address\": \"{{$json.address}}\",\n  \"website_url\": \"{{$json.website_url}}\",\n  \"website_status\": \"{{$json.website_status}}\",\n  \"business_unit\": \"{{$json.business_unit}}\",\n  \"source\": \"naver_map\",\n  \"need\": \"{{$json.need}}\",\n  \"score\": {{$json.score}},\n  \"customer_type\": \"b2c\",\n  \"assigned_to\": \"{{$json.business_unit === 'webdev' ? 'D-LEAD' : $json.business_unit === 'pension' ? 'A-LEAD' : 'B-LEAD'}}\"\n}",
+        "options": {}
+      },
+      "id": "upsert-supabase",
+      "name": "Supabase 저장 (중복 무시)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "=📊 **네이버지도 크롤링 완료**\n\n🔍 키워드: {{$json.keyword}}\n📦 수집: {{$json.total}}건\n🆕 신규: {{$json.new_count}}건\n🏢 홈페이지 없는 곳: {{$json.no_website}}건\n\n⏰ {{new Date().toLocaleString('ko-KR', {timeZone: 'Asia/Seoul'})}}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-report",
+      "name": "텔레그램 - 수집 리포트",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 300]
+    }
+  ],
+  "connections": {
+    "6시간마다 실행": {
+      "main": [[{ "node": "키워드 생성", "type": "main", "index": 0 }]]
+    },
+    "키워드 생성": {
+      "main": [[{ "node": "네이버 지역검색 API", "type": "main", "index": 0 }]]
+    },
+    "네이버 지역검색 API": {
+      "main": [[{ "node": "결과 파싱 + 필터", "type": "main", "index": 0 }]]
+    },
+    "결과 파싱 + 필터": {
+      "main": [[{ "node": "Supabase 저장 (중복 무시)", "type": "main", "index": 0 }]]
+    },
+    "Supabase 저장 (중복 무시)": {
+      "main": [[{ "node": "텔레그램 - 수집 리포트", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "가망고객수집" }, { "name": "크롤링" }]
+}

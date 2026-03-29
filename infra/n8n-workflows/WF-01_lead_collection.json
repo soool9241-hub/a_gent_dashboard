@@ -1,0 +1,132 @@
+{
+  "name": "WF-01 가망고객 수집 파이프라인",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-collect",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - 리드 수집",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{$json.name}}\",\n  \"phone\": \"{{$json.phone}}\",\n  \"email\": \"{{$json.email}}\",\n  \"company\": \"{{$json.company}}\",\n  \"business_unit\": \"{{$json.business_unit}}\",\n  \"source\": \"{{$json.source}}\",\n  \"interest\": {{$json.interest ? JSON.stringify($json.interest) : '[]'}},\n  \"need\": \"{{$json.need}}\",\n  \"score\": {{$json.score || 10}},\n  \"assigned_to\": \"{{$json.business_unit === 'pension' ? 'A-LEAD' : $json.business_unit === 'cnc' ? 'B-LEAD' : $json.business_unit === 'automation' ? 'C-LEAD' : 'D-LEAD'}}\"\n}",
+        "options": {}
+      },
+      "id": "save-to-supabase",
+      "name": "Supabase - 리드 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.score}}",
+              "operation": "largerEqual",
+              "value2": 50
+            }
+          ]
+        }
+      },
+      "id": "check-hot-lead",
+      "name": "Hot 리드 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "=🔥 **Hot 리드 발생!**\n\n👤 {{$json.name}}\n📱 {{$json.phone}}\n🏢 {{$json.company}}\n📌 사업부: {{$json.business_unit}}\n💡 니즈: {{$json.need}}\n📊 스코어: {{$json.score}}점\n\n⚡ 즉시 응대 필요!",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-alert",
+      "name": "텔레그램 - Hot 리드 알림",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/collection_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"business_unit\": \"{{$json.business_unit}}\",\n  \"source\": \"{{$json.source}}\",\n  \"collected_count\": 1,\n  \"new_count\": 1,\n  \"status\": \"completed\"\n}",
+        "options": {}
+      },
+      "id": "log-collection",
+      "name": "수집 로그 기록",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"message\": \"리드 수집 완료\"}"
+      },
+      "id": "respond-ok",
+      "name": "응답 반환",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 420]
+    }
+  ],
+  "connections": {
+    "Webhook - 리드 수집": {
+      "main": [
+        [
+          { "node": "Supabase - 리드 저장", "type": "main", "index": 0 },
+          { "node": "수집 로그 기록", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Supabase - 리드 저장": {
+      "main": [
+        [{ "node": "Hot 리드 체크", "type": "main", "index": 0 }]
+      ]
+    },
+    "Hot 리드 체크": {
+      "main": [
+        [{ "node": "텔레그램 - Hot 리드 알림", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "수집 로그 기록": {
+      "main": [
+        [{ "node": "응답 반환", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "가망고객수집" }]
+}

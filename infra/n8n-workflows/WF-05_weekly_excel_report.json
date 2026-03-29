@@ -1,0 +1,70 @@
+{
+  "name": "WF-05 주간 엑셀 보고서 자동 생성",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "id": "cron-monday",
+      "name": "매주 월요일 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/leads?created_at=gte.{{new Date(Date.now() - 7*86400000).toISOString()}}&select=*&order=business_unit,score.desc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-weekly-leads",
+      "name": "이번 주 리드 전체 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all().map(i => i.json);\nconst flatLeads = Array.isArray(leads[0]) ? leads[0] : leads;\n\n// CSV 형식으로 변환\nconst headers = ['No','이름','전화번호','이메일','상호명','업종','니즈','등급','스코어','출처','수집일','사업부','담당'];\nlet csv = headers.join(',') + '\\n';\n\nflatLeads.forEach((l, i) => {\n  const row = [\n    i + 1,\n    l.name || '',\n    l.phone || '',\n    l.email || '',\n    l.company || '',\n    (l.interest || []).join(';'),\n    l.need || '',\n    l.grade || '',\n    l.score || 0,\n    l.source || '',\n    l.created_at ? l.created_at.split('T')[0] : '',\n    l.business_unit || '',\n    l.assigned_to || ''\n  ].map(v => `\"${String(v).replace(/\"/g, '\"\"')}\"`);\n  csv += row.join(',') + '\\n';\n});\n\n// 사업부별 요약\nconst units = { pension: 'A-달팽이', cnc: 'B-스토리팜', automation: 'C-AI자동화', webdev: 'D-웹개발' };\nconst summary = {};\nflatLeads.forEach(l => {\n  const u = l.business_unit;\n  if (!summary[u]) summary[u] = { total: 0, hot: 0, warm: 0, cold: 0 };\n  summary[u].total++;\n  summary[u][l.stage || 'cold']++;\n});\n\nlet report = `📊 **주간 가망고객 수집 리포트**\\n━━━━━━━━━━━━━━━━━━\\n`;\nreport += `📅 ${new Date(Date.now()-7*86400000).toLocaleDateString('ko-KR')} ~ ${new Date().toLocaleDateString('ko-KR')}\\n\\n`;\nreport += `📦 **총 수집: ${flatLeads.length}건**\\n\\n`;\n\nObject.entries(summary).forEach(([u, s]) => {\n  report += `🏢 ${units[u] || u}: ${s.total}건 (Hot:${s.hot||0} Warm:${s.warm||0} Cold:${s.cold||0})\\n`;\n});\n\nreturn [{ json: { csv, report, total: flatLeads.length }, binary: {} }];"
+      },
+      "id": "generate-csv",
+      "name": "CSV + 요약 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "={{$json.report}}\n\n📎 CSV 파일은 Google Sheets에서 확인하세요.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-weekly",
+      "name": "텔레그램 주간 리포트",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "매주 월요일 09:00": {
+      "main": [[{ "node": "이번 주 리드 전체 조회", "type": "main", "index": 0 }]]
+    },
+    "이번 주 리드 전체 조회": {
+      "main": [[{ "node": "CSV + 요약 생성", "type": "main", "index": 0 }]]
+    },
+    "CSV + 요약 생성": {
+      "main": [[{ "node": "텔레그램 주간 리포트", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "리포트" }, { "name": "엑셀" }]
+}

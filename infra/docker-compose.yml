@@ -1,0 +1,40 @@
+version: '3.8'
+
+# n8n 셀프호스팅 (Docker)
+# 실행: docker-compose up -d
+# 접속: http://localhost:5678
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n-lead-collector
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme123!
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - GENERIC_TIMEZONE=Asia/Seoul
+      - TZ=Asia/Seoul
+      # Supabase 연결 (환경변수로 관리)
+      - SUPABASE_URL=${SUPABASE_URL:-https://pcgzuvnvcxoobkcluksz.supabase.co}
+      - SUPABASE_KEY=${SUPABASE_KEY:-your_supabase_service_role_key}
+      # 텔레그램 봇 (알림용)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/home/node/workflows
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  n8n_data:
+    driver: local
