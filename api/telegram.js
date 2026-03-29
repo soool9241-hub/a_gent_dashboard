@@ -37,19 +37,41 @@ async function sendTG(chatId, text, opts) {
   }, JSON.stringify(payload));
 }
 
-async function sendDocument(chatId, filename, content) {
+async function sendDocument(chatId, filename, contentBuffer) {
   return new Promise((resolve, reject) => {
-    const boundary = '----FormBoundary' + Date.now();
-    const fileBuffer = Buffer.from(content, 'utf-8');
-    const header = '--' + boundary + '\r\n' +
-      'Content-Disposition: form-data; name="chat_id"\r\n\r\n' + chatId + '\r\n' +
-      '--' + boundary + '\r\n' +
-      'Content-Disposition: form-data; name="document"; filename="' + filename + '"\r\n' +
-      'Content-Type: application/octet-stream\r\n\r\n';
-    const footer = '\r\n--' + boundary + '--\r\n';
-    const headerBuf = Buffer.from(header, 'utf-8');
-    const footerBuf = Buffer.from(footer, 'utf-8');
-    const body = Buffer.concat([headerBuf, fileBuffer, footerBuf]);
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2) + Date.now();
+
+    // Build each part as a Buffer to avoid any string encoding issues
+    const CRLF = '\r\n';
+    const parts = [];
+
+    // Part 1: chat_id
+    parts.push(Buffer.from(
+      '--' + boundary + CRLF +
+      'Content-Disposition: form-data; name="chat_id"' + CRLF + CRLF +
+      chatId + CRLF,
+      'utf-8'
+    ));
+
+    // Part 2: document file — header
+    parts.push(Buffer.from(
+      '--' + boundary + CRLF +
+      'Content-Disposition: form-data; name="document"; filename="' + filename + '"' + CRLF +
+      'Content-Type: text/csv; charset=utf-8' + CRLF + CRLF,
+      'utf-8'
+    ));
+
+    // Part 2: document file — body (already a Buffer with BOM)
+    const fileBuffer = Buffer.isBuffer(contentBuffer) ? contentBuffer : Buffer.from(contentBuffer, 'utf-8');
+    parts.push(fileBuffer);
+
+    // Closing boundary
+    parts.push(Buffer.from(
+      CRLF + '--' + boundary + '--' + CRLF,
+      'utf-8'
+    ));
+
+    const body = Buffer.concat(parts);
 
     const u = new URL('https://api.telegram.org/bot' + TG_TOKEN + '/sendDocument');
     const req = https.request({
@@ -57,34 +79,42 @@ async function sendDocument(chatId, filename, content) {
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data; boundary=' + boundary,
-        'Content-Length': Buffer.byteLength(body)
+        'Content-Length': body.length
       }
     }, res => {
-      let d = ''; res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { resolve(d); } });
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const raw = Buffer.concat(chunks).toString('utf-8');
+        try { resolve(JSON.parse(raw)); } catch(e) { resolve(raw); }
+      });
     });
     req.on('error', reject);
-    req.end(body);
+    req.write(body);
+    req.end();
   });
 }
 
-// CSV 생성 헬퍼
+// CSV 생성 헬퍼 — returns a Buffer with UTF-8 BOM for Korean Excel compatibility
 function leadsToCSV(leads) {
-  const units = { pension: 'A-달팽이아지트', cnc: 'B-스토리팜', automation: 'C-AI자동화', webdev: 'D-웹개발' };
-  const BOM = '\uFEFF';
   const headers = ['No','상호명','전화번호','주소','홈페이지','사이트상태','업종태그','니즈','등급','스코어','비고(상세)','수집일'];
-  let csv = BOM + headers.join(',') + '\n';
+  const lines = [];
+  lines.push(headers.join(','));
   leads.forEach((l, i) => {
     const row = [
       i+1, l.company||l.name||'', l.phone||'', l.address||'',
       l.website_url||'없음', l.website_status||'', (l.tags||[]).join('/'),
       l.need||'', l.grade||'', l.score||0,
-      (l.notes||'').replace(/\n/g,' | '),
+      (l.notes||'').replace(/[\r\n]+/g,' | ').replace(/,/g, ' '),
       l.created_at ? l.created_at.split('T')[0] : ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
-    csv += row.join(',') + '\n';
+    lines.push(row.join(','));
   });
-  return csv;
+  const csvString = lines.join('\r\n') + '\r\n';
+  // UTF-8 BOM (EF BB BF) as explicit bytes, then append CSV content
+  const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+  const csvBuf = Buffer.from(csvString, 'utf-8');
+  return Buffer.concat([bom, csvBuf]);
 }
 
 // 명령어 처리
