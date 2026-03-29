@@ -1053,6 +1053,10 @@ const AGENTS = [
   {code:'S-CEO',name:'총괄팀장',role:'👑 AI 에이전트 총괄 팀장 — 4개 사업부 100명 통합 지휘',team:'S',status:'active',kpi:97,last:'항상',next:'매일',log:'4개 사업부 통합 현황 모니터링 + 전략 의사결정 + 사업부 간 시너지 조율 중',
    presets:['전사 현황 종합 보고','사업부별 KPI 점검','이번 주 우선순위 TOP5 결정','사업부 간 협업 이슈 점검','긴급 이슈 대응 지시']},
 
+  // ── 가망고객헌터 레전드 (최상위) ──────────────────────
+  {code:'S-LEGEND',name:'가망고객헌터 레전드',role:'👑 최상위 가망고객 헌터 — 전 사업부 헌터 통합 지휘 + 전략 수립 + 크로스 영업',team:'S',status:'active',kpi:99,last:'항상',next:'실시간',log:'👑 전 사업부 가망고객 헌터 6명 통합 지휘. 크로스 사업부 영업 전략 + 고가치 리드 배분 + 수집→영업→계약 풀퍼널 총괄',
+   presets:['전체 헌터 가동 현황','사업부별 수집 성과 비교','크로스 영업 기회 발굴','고가치 리드 TOP20','수집→영업 전환율 분석','이번 주 영업 전략 수립','전체 CSV 다운로드']},
+
   // ── 범용 가망고객 수집 에이전트 (S팀) ────────────────
   {code:'S-HUNT',name:'범용 가망고객헌터',role:'🎯 범용 가망고객 수집 에이전트 — 업종/지역 무관 자동 수집',team:'S',status:'active',kpi:85,last:'2시간마다',next:'자동',log:'🟢 실시간 가동 중 — 전북 전체 공간운영자(펜션/글램핑/캠핑/독채/파티룸/스튜디오) 자동 수집. 2시간 주기 크론 + 블로그리뷰 분석 + 우선순위 자동 분류',
    presets:['현재 수집 현황 보고','홈페이지 없는 곳 TOP10','블로그리뷰 많은데 사이트 없는 곳','오늘 신규 수집 리스트','키워드 추가/변경 요청','권역별 수집 현황','CSV 데이터 다운로드']},
@@ -1947,6 +1951,50 @@ PART 10. 주간 KPI 체크리스트
 10배의 목표, 레버리지 구조, 가치 사다리, 조인트 협업으로 성장을 가속하라.
 목표를 줄이지 말고, 행동량을 10배로 늘려라. 미쳤다는 소리를 들을 때까지.
 `;
+
+// ── 가망고객헌터 레전드 지침서 ─────────────────
+if(!agentGuides['S-LEGEND']) agentGuides['S-LEGEND'] = `👑 가망고객헌터 레전드 지침서 v1.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 역할: 전 사업부 가망고객 헌터 최상위 총괄
+
+🏗️ 지휘 체계:
+👑 S-LEGEND (레전드) ← 당신
+  ├── 🎯 S-HUNT (범용 헌터) — 전북 5권역 44키워드 자동 크롤링
+  ├── 🏡 A-LEAD + A-R2 — 달팽이아지트 펜션 가망고객
+  ├── 🔧 B-LEAD + B-R2 — 스토리팜 CNC공방 가망고객
+  ├── 🤖 C-LEAD — AI자동화 가망고객
+  └── 💻 D-LEAD — 웹개발 가망고객
+
+🎯 핵심 임무:
+1. 전체 헌터 가동 상태 모니터링 + 성과 비교
+2. 고가치 리드 발굴 → 적합한 사업부 배분
+3. 크로스 사업부 영업 기회 발견
+   예) 펜션 가망고객 → 홈페이지도 필요 → D팀 연계
+   예) 카페 신규오픈 → 간판 필요 → B팀 + 홈페이지 → D팀
+4. 수집→영업→계약 풀퍼널 전략 수립
+
+📊 핵심 KPI:
+• 일일 수집량 (목표: 300건/일)
+• 1순위 리드 비율 (홈페이지 없는 곳, 목표: 40%+)
+• 전화번호 확보율 (목표: 30%+)
+• 블로그 인기업체 발굴 (30건↑, 목표: 매주 50곳)
+• 크로스 영업 연계 건수
+
+🔥 리드 등급 분류:
+• S급 (50점↑): 영업중+사이트없음+블로그인기 → 즉시 영업!
+• A급 (30~49): 사이트없음 or SNS만 → 1주일 내 연락
+• B급 (15~29): 블로그만/리뉴얼 대상 → 2주 내 제안
+• C급 (5~14): 사이트 보유 → 장기 너처링
+
+📱 크로스 영업 시나리오:
+1. 펜션+웹개발: "홈페이지 없는 펜션" → A팀 숙박 + D팀 사이트 패키지
+2. 카페+CNC+웹: "신규 카페" → B팀 간판 + D팀 홈페이지
+3. 소상공인+자동화+웹: "SNS만 운영" → C팀 자동화 + D팀 사이트
+
+⏰ 운영 루틴:
+• 2시간마다: 자동 크롤링 + 텔레그램 리포트
+• 매일: 고가치 리드 TOP20 선별 + 영업팀 배분
+• 매주: 전체 헌터 성과 비교 + 전략 조정`;
 
 // ── 범용 가망고객 수집 에이전트 지침서 ─────────────────
 if(!agentGuides['S-HUNT']) agentGuides['S-HUNT'] = `🎯 범용 가망고객 수집 에이전트 지침서 v1.0
@@ -3116,8 +3164,8 @@ async function processQueue() {
     var startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
     chatHistories[order.agentCode].push({role:'agent',text:'⏳ 오더 접수! Claude AI가 작업 중...',time:startStr});
 
-    // S-HUNT: 실제 가망고객 API 연동
-    if (order.agentCode === 'S-HUNT') {
+    // S-LEGEND / S-HUNT: 실제 가망고객 API 연동
+    if (order.agentCode === 'S-LEGEND' || order.agentCode === 'S-HUNT') {
       try {
         var huntText = order.orderText;
         var huntResult = '';
@@ -4022,6 +4070,13 @@ setTimeout(()=>{
     const data = await resp.json();
     if(!data || !data.total) return;
     const unitMap = {pension:'A',cnc:'B',automation:'C',webdev:'D'};
+    // 레전드 상태 업데이트
+    const legend = AGENTS.find(x=>x.code==='S-LEGEND');
+    if(legend){
+      legend.status = 'active';
+      legend.log = '👑 전 헌터 통합 지휘 — 총 '+data.total+'건 수집 | Hot '+data.hot+'건 | 6명 헌터 가동 중';
+      legend.kpi = Math.min(100, Math.round(data.total / 1000 * 100));
+    }
     // 범용 헌터 상태 업데이트
     const hunt = AGENTS.find(x=>x.code==='S-HUNT');
     if(hunt){
