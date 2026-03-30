@@ -129,6 +129,39 @@ module.exports = async function handler(req, res) {
       { keyword: '부안 글램핑', unit: 'webdev', type: 'glamping', zone: 5 },
       { keyword: '고창 글램핑', unit: 'webdev', type: 'glamping', zone: 5 },
 
+      // ═══ A팀 달팽이아지트 — 펜션 숙박 판매 타겟 ═══
+      // 여행사/기업 (단체숙박 유치)
+      { keyword: '전주 여행사', unit: 'pension', type: 'travel', zone: 2, reason: '단체 숙박 패키지 제안 — 여행사 통한 안정적 객실 확보' },
+      { keyword: '전주 기업연수', unit: 'pension', type: 'corporate', zone: 2, reason: '기업 워크숍/연수 숙박 제안 — 고단가 단체 예약' },
+      { keyword: '전주 단체숙박', unit: 'pension', type: 'group', zone: 2, reason: '동호회/모임 단체 숙박 유치' },
+      { keyword: '전주 웨딩플래너', unit: 'pension', type: 'wedding', zone: 2, reason: '스몰웨딩/허니문 숙박 패키지 제안' },
+      { keyword: '전주 동호회', unit: 'pension', type: 'club', zone: 2, reason: '정기모임 숙박 + 워크숍 패키지 제안' },
+      { keyword: '완주 여행사', unit: 'pension', type: 'travel', zone: 1, reason: '근거리 여행사 — 숙박 연계 상품 협업' },
+      { keyword: '익산 여행사', unit: 'pension', type: 'travel', zone: 3, reason: '익산 여행사 — 완주 펜션 숙박 연계' },
+      // 학교/유치원 (체험학습)
+      { keyword: '전주 유치원', unit: 'pension', type: 'kindergarten', zone: 2, reason: '체험학습+숙박 패키지 제안' },
+      { keyword: '전주 어린이집', unit: 'pension', type: 'daycare', zone: 2, reason: '원족/체험 프로그램 숙박 연계' },
+      // 교회/성당 (수련회)
+      { keyword: '전주 교회', unit: 'pension', type: 'church', zone: 2, reason: '수련회/캠프 단체 숙박 유치' },
+      { keyword: '완주 교회', unit: 'pension', type: 'church', zone: 1, reason: '근거리 교회 수련회 숙박' },
+
+      // ═══ C팀 AI자동화 — SNS/마케팅 자동화 판매 타겟 ═══
+      // SNS 운영 고민하는 소상공인
+      { keyword: '전주 필라테스', unit: 'automation', type: 'pilates', zone: 2, reason: 'SNS 마케팅 필수 업종 — 인스타 자동화 제안' },
+      { keyword: '전주 네일아트', unit: 'automation', type: 'nail', zone: 2, reason: 'SNS 포트폴리오 필수 — 자동 포스팅 제안' },
+      { keyword: '전주 반영구', unit: 'automation', type: 'tattoo', zone: 2, reason: 'SNS 비포/애프터 마케팅 — 자동화 제안' },
+      { keyword: '전주 피부관리', unit: 'automation', type: 'skincare', zone: 2, reason: 'SNS 후기 마케팅 — 리뷰 자동수집+포스팅' },
+      { keyword: '전주 미용실', unit: 'automation', type: 'salon', zone: 2, reason: '인스타 스타일링 포스팅 자동화 제안' },
+      // 온라인 판매 자동화
+      { keyword: '전주 쇼핑몰', unit: 'automation', type: 'shop', zone: 2, reason: '상품등록/재고관리/CS 자동화 제안' },
+      { keyword: '전주 창업', unit: 'automation', type: 'startup', zone: 2, reason: '초기 마케팅 자동화 — 블로그+SNS 패키지' },
+      { keyword: '전주 소상공인', unit: 'automation', type: 'small_biz', zone: 2, reason: '마케팅 인력 부족 — AI 자동화로 비용 절감 제안' },
+      // 완주/익산
+      { keyword: '완주 필라테스', unit: 'automation', type: 'pilates', zone: 1, reason: '근거리 SNS 자동화 제안' },
+      { keyword: '익산 미용실', unit: 'automation', type: 'salon', zone: 3, reason: 'SNS 마케팅 자동화 제안' },
+      { keyword: '익산 필라테스', unit: 'automation', type: 'pilates', zone: 3, reason: 'SNS 자동화 제안' },
+      { keyword: '군산 필라테스', unit: 'automation', type: 'pilates', zone: 4, reason: 'SNS 자동화 제안' },
+
       // ═══ B팀 CNC 스토리팜 — 간판/각인/소품 제작 의뢰 타겟 ═══
       // 새로 오픈하는 매장 (간판+인테리어소품 필요)
       { keyword: '전주 카페', unit: 'cnc', type: 'cafe', zone: 2, reason: '신규/리뉴얼 간판+메뉴보드+인테리어소품 제작 의뢰' },
@@ -239,10 +272,10 @@ module.exports = async function handler(req, res) {
           website_status: siteStatus,
           business_unit: kw.unit,
           source: 'naver_map',
-          need: kw.unit === 'cnc' ? '🔧 ' + (kw.reason || '간판/소품 제작 제안 대상') : need,
-          score: kw.unit === 'cnc' ? (isActive ? 20 : 10) + (blogCount >= 100 ? 15 : blogCount >= 30 ? 10 : blogCount >= 10 ? 5 : 0) : score,
+          need: kw.reason ? ({'cnc':'🔧','pension':'🏡','automation':'🤖'}[kw.unit]||'📌') + ' ' + kw.reason : need,
+          score: kw.unit !== 'webdev' ? (isActive ? 20 : 10) + (blogCount >= 100 ? 15 : blogCount >= 30 ? 10 : blogCount >= 10 ? 5 : 0) : score,
           customer_type: 'b2b',
-          assigned_to: kw.unit === 'cnc' ? 'B-LEAD' : 'D-LEAD',
+          assigned_to: kw.unit === 'cnc' ? 'B-LEAD' : kw.unit === 'pension' ? 'A-LEAD' : kw.unit === 'automation' ? 'C-LEAD' : 'D-LEAD',
           headcount: blogCount > 0 ? '블로그리뷰 ' + blogCount + '건' : null,
           interest: [kw.type],
           tags: [category, kw.type, priority, siteStatus, kw.zone + '권역', kw.unit === 'cnc' ? 'CNC타겟' : '', blogCount >= 30 ? '인기업체' : ''].filter(Boolean),
